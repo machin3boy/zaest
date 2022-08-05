@@ -1,0 +1,151 @@
+import "utils/pack/bool/unpack256" as unpack256;
+import "utils/pack/bool/unpack128" as unpack128;
+import "utils/pack/u32/pack128" as pack128;
+import "utils/casts/u32_from_bits" as u32_from_bits;
+import "hashes/sha256/sha256.zok" as sha256;
+import "hashes/sha256/256bitPadded.zok" as hash256;
+import "hashes/sha256/512bit.zok" as hash512;
+import "hashes/sha256/1536bit.zok" as hash1536;
+
+def field_to_u32_8(field f) -> u32[8] {
+
+    bool[256] bits = unpack256(f);
+
+    return [u32_from_bits(bits[0..32]), u32_from_bits(bits[32..64]), u32_from_bits(bits[64..96]), u32_from_bits(bits[96..128]), u32_from_bits(bits[128..160]), u32_from_bits(bits[160..192]), u32_from_bits(bits[192..224]), u32_from_bits(bits[224..256])];
+}
+
+def field_to_packed_fields(field f) -> field[2] {
+
+    u32[8] f_to_u32_8 = field_to_u32_8(f);
+
+    return [pack128(f_to_u32_8[0..4]), pack128(f_to_u32_8[4..8])];
+}
+
+def verify_hash_256_bits(field inputValue, field inputHash) -> bool {
+
+    u32[8] inputValueArray = field_to_u32_8(inputValue);
+    u32[8] inputHashArray  = field_to_u32_8(inputHash); 
+    u32[8] computedHash    = hash256(inputValueArray);
+
+    return computedHash == inputHashArray;
+}
+
+def verify_hash_512_bits(field inputValueA, field inputValueB, field inputHash) -> bool {
+
+    u32[8] inputValueArrayA = field_to_u32_8(inputValueA);
+    u32[8] inputValueArrayB = field_to_u32_8(inputValueB);
+    u32[8] inputHashArray   = field_to_u32_8(inputHash);
+    u32[8] computedHash     = hash512(inputValueArrayA, inputValueArrayB);
+
+    return computedHash == inputHashArray;
+}
+
+def verify_hash_1536_bits(field inputValueA, field inputValueB, field inputValueC, field inputValueD, field inputValueE, field inputValueF, field inputHash) -> bool {
+
+    u32[8] inputValueArrayA = field_to_u32_8(inputValueA);
+    u32[8] inputValueArrayB = field_to_u32_8(inputValueB);
+    u32[8] inputValueArrayC = field_to_u32_8(inputValueC);
+    u32[8] inputValueArrayD = field_to_u32_8(inputValueD);
+    u32[8] inputValueArrayE = field_to_u32_8(inputValueE);
+    u32[8] inputValueArrayF = field_to_u32_8(inputValueF);
+    u32[8] inputHashArray   = field_to_u32_8(inputHash);
+    u32[8] computedHash     = hash1536(inputValueArrayA, inputValueArrayB, inputValueArrayC, inputValueArrayD, inputValueArrayE, inputValueArrayF);
+
+    return computedHash == inputHashArray;
+}
+
+def verify_hash_2048_bits(field inputValueA, field inputValueB, field inputValueC, field inputValueD, field inputValueE, field inputValueF, field inputValueG, field inputValueH, field inputHash) -> bool {
+
+    u32[8] inputValueArrayA = field_to_u32_8(inputValueA);
+    u32[8] inputValueArrayB = field_to_u32_8(inputValueB);
+    u32[8] inputValueArrayC = field_to_u32_8(inputValueC);
+    u32[8] inputValueArrayD = field_to_u32_8(inputValueD);
+    u32[8] inputValueArrayE = field_to_u32_8(inputValueE);
+    u32[8] inputValueArrayF = field_to_u32_8(inputValueF);
+    u32[8] inputValueArrayG = field_to_u32_8(inputValueG);
+    u32[8] inputValueArrayH = field_to_u32_8(inputValueH);
+    u32[8] inputHashArray   = field_to_u32_8(inputHash);
+    u32[8] computedHash     = sha256([[...inputValueArrayA, ...inputValueArrayB], [...inputValueArrayC, ...inputValueArrayD], [...inputValueArrayE, ...inputValueArrayF], [...inputValueArrayG, ...inputValueArrayH]]);
+
+    return computedHash == inputHashArray;
+}
+
+def verify_hash_2560_bits(field inputValueA, field inputValueB, field inputValueC, field inputValueD, field inputValueE, field inputValueF, field inputValueG, field inputValueH, field inputValueI, field inputValueJ, field inputHash) -> bool {
+
+    u32[8] inputValueArrayA = field_to_u32_8(inputValueA);
+    u32[8] inputValueArrayB = field_to_u32_8(inputValueB);
+    u32[8] inputValueArrayC = field_to_u32_8(inputValueC);
+    u32[8] inputValueArrayD = field_to_u32_8(inputValueD);
+    u32[8] inputValueArrayE = field_to_u32_8(inputValueE);
+    u32[8] inputValueArrayF = field_to_u32_8(inputValueF);
+    u32[8] inputValueArrayG = field_to_u32_8(inputValueG);
+    u32[8] inputValueArrayH = field_to_u32_8(inputValueH);
+    u32[8] inputValueArrayI = field_to_u32_8(inputValueI);
+    u32[8] inputValueArrayJ = field_to_u32_8(inputValueJ);
+    u32[8] inputHashArray   = field_to_u32_8(inputHash);
+    u32[8] computedHash     = sha256([[...inputValueArrayA, ...inputValueArrayB], [...inputValueArrayC, ...inputValueArrayD], [...inputValueArrayE, ...inputValueArrayF], [...inputValueArrayG, ...inputValueArrayH], [...inputValueArrayI, ...inputValueArrayJ]]);
+
+    return computedHash == inputHashArray;
+}
+
+/*
+hash lengths:
+
+PBK     = 40  bytes cut down to 32 bytes = 256 bits
+u       = 16  bytes = 128 bits           = 256 bits padded
+d'      = 128 bytes = 1024 bits          = 1024 bits
+up      = 10  bytes = 80  bits           = 256 bits padded
+ar      = 10  bytes = 80  bits           = 256 bits padded
+t-limit = 4   bytes = 16  bits           = 256 bits padded
+o       = 32  bytes = 256 bits           = 256 bits padded
+a       = 128 bytes = 1024 bits          = 1024 bits
+v       = 20  bytes = 160 bits           = 256 bits padded
+n       = 10  bytes = 80  bits           = 256 bits padded
+c       = 60  bytes = 480 bits           = 512 bits padded
+e_rs    = 128 bytes = 1024 bits          = 1024 bits padded
+
+h_key       ->      PBK ++ u        -> 256 + 256        = 512               -> 512 
+h_ru        -> d'++up++ar++v++t_lim -> 1024 + 256 + 256 + 256 + 256 = 2048  -> 2048
+o           ->      v  ++  u        -> 256 + 256        = 512               -> 512 
+h_da        ->    d' ++ a ++ u      -> 1024+1024+256    = 2304 bits         -> 2560
+h_ipfs_d    ->    a  ++ o ++ c      -> 1024+256+512     = 1792 bits         -> 2048
+h_dp        ->         d'           -> 1024             = 1024 bits         -> 1024
+
+h_tx        ->      v  ++  n        -> 256 + 256        = 512 bits          -> 512 
+h_dn        ->    d  ++ v ++ n      -> 1024 + 256 + 256 = 1536 bits         -> 1536
+h_ipfs_p    ->     e_rs ++ c        -> 1024 + 512       = 1536 bits         -> 1536
+*/
+
+/*
+function implemented:
+
+function(
+    public field PBK, private field u,
+    private field d', private field up,
+    private field ar, private field v,
+    public field o,bpublic field a,
+    public field c, public field h_key,
+    public field h_ru, public field h_da,
+    public field h_dp, public field h_ipfs_d) {
+        prove that:
+            1. h_key == hash(PBK++u)
+            2. h_ru == hash(d' ++ up() ++ ar
+            ++ v ++ t_limit)
+            3. o == hash(v ++ u)
+            4. a == encrypt_AES(d', u)
+            5. h_da == hash(d' ++ a ++ u)
+            6. h_dp == hash(d')
+            7. h_ipfs_d == hash(a ++ o ++ c)
+}
+*/
+
+def main(field PBK, private field u, private field dPrimeA, private field dPrimeB, private field dPrimeC, private field dPrimeD, private field up, private field ar, private field v, field t_limit, field aA, field aB, field aC, field aD, field o, field cA, field cB, field h_key, field h_ru, field h_da, field h_ipfs_d, field padding) -> bool {  
+
+    bool condition1         = verify_hash_512_bits(PBK, u, h_key);
+    bool condition2         = verify_hash_2048_bits(dPrimeA, dPrimeB, dPrimeC, dPrimeD, up, ar, v, t_limit, h_ru);
+    bool condition3         = verify_hash_512_bits(v, u, o);
+    bool condition5         = verify_hash_2560_bits(dPrimeA, dPrimeB, dPrimeC, dPrimeD, aA, aB, aC, aD, u, padding, padding);
+
+    return (condition1 && condition2 && condition3 && condition5);
+}
+
