@@ -9,4 +9,4 @@ Of course, some of the proposed use-cases of this protocol are highly contingent
 
 Chainlink's prospective advantages to the protocol also include the possibility to simplify and scale the ZKP portions of the protocol more easily (although the protocol outlined as is infinitely scaleable, Chainlink can allow for a number of optimizations through off-chain computations).
 
-The design of the protocol is presented in the file Vera.pef
+The design of the protocol is presented in the file docs/Vera.pdf.
