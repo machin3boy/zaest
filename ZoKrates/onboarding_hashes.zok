@@ -1,34 +1,6 @@
 import "./hash_512" as hash512;
-import "./hash_2048" as hash2048;
+import "./hash_1536" as hash1536;
 import "./hash_2560" as hash2560;
-
-/*
-hash lengths:
-
-PBK     = 40  bytes cut down to 32 bytes = 256 bits
-u       = 16  bytes = 128 bits           = 256 bits padded
-d'      = 128 bytes = 1024 bits          = 1024 bits
-up      = 10  bytes = 80  bits           = 256 bits padded
-ar      = 10  bytes = 80  bits           = 256 bits padded
-t-limit = 4   bytes = 16  bits           = 256 bits padded
-o       = 32  bytes = 256 bits           = 256 bits padded
-a       = 128 bytes = 1024 bits          = 1024 bits
-v       = 20  bytes = 160 bits           = 256 bits padded
-n       = 10  bytes = 80  bits           = 256 bits padded
-c       = 60  bytes = 480 bits           = 512 bits padded
-e_rs    = 128 bytes = 1024 bits          = 1024 bits padded
-
-h_key       ->      PBK ++ u        -> 256 + 256        = 512               -> 512 
-h_ru        -> d'++up++ar++v++t_lim -> 1024 + 256 + 256 + 256 + 256 = 2048  -> 2048
-o           ->      v  ++  u        -> 256 + 256        = 512               -> 512 
-h_da        ->    d' ++ a ++ u      -> 1024+1024+256    = 2304 bits         -> 2560
-h_ipfs_d    ->    a  ++ o ++ c      -> 1024+256+512     = 1792 bits         -> 2048
-h_dp        ->         d'           -> 1024             = 1024 bits         -> 1024
-
-h_tx        ->      v  ++  n        -> 256 + 256        = 512 bits          -> 512 
-h_dn        ->    d  ++ v ++ n      -> 1024 + 256 + 256 = 1536 bits         -> 1536
-h_ipfs_p    ->     e_rs ++ c        -> 1024 + 512       = 1536 bits         -> 1536
-*/
 
 /*
 function implemented:
@@ -37,14 +9,13 @@ function(
     public field PBK, private field u,
     private field d', private field up,
     private field ar, private field v,
-    public field o,bpublic field a,
+    public field o, public field a,
     public field c, public field h_key,
     public field h_ru, public field h_da,
     public field h_dp, public field h_ipfs_d) {
         prove that:
             1. h_key == hash(PBK++u)
-            2. h_ru == hash(d' ++ up() ++ ar
-            ++ v ++ t_limit)
+            2. h_ru == hash(d' ++ up() ++ ar ++ v)
             3. o == hash(v ++ u)
             4. a == encrypt_AES(d', u)
             5. h_da == hash(d' ++ a ++ u)
@@ -53,12 +24,12 @@ function(
 }
 */
 
-def main(field PBK, private field u, private field dPrimeA, private field dPrimeB, private field dPrimeC, private field dPrimeD, private field up, private field ar, private field v, field t_limit, field aA, field aB, field aC, field aD, field o, field cA, field cB, field h_key, field h_ru, field h_da, field h_ipfs_d, field padding) -> bool {  
+def main(field PBK_A, field PBK_B, private field u, private field dPrimeA, private field dPrimeB, private field dPrimeC, private field dPrimeD, private field dPrimeE, private field dPrimeF, private field dPrimeG, private field dPrimeH, private field up, private field ar, private field vA, private field vB, field aA, field aB, field aC, field aD, field aE, field aF, field aG, field aH, field oA, field oB, field cA, field cB, field cC, field cD, field h_keyA, field h_keyB, field h_ruA, field h_ruB, field h_daA, field h_daB, field h_ipfs_dA, field h_ipfs_dB, field padding) -> bool {  
 
-    bool condition1         = hash512(PBK, u) == h_key;
-    bool condition2         = hash2048(dPrimeA, dPrimeB, dPrimeC, dPrimeD, up, ar, v, t_limit) == h_ru;
-    bool condition3         = hash512(v, u)   == o;
-    bool condition5         = hash2560(dPrimeA, dPrimeB, dPrimeC, dPrimeD, aA, aB, aC, aD, u, padding) == h_da;
+    bool condition1         = hash512(PBK_A, PBK_B, u, padding) == [h_keyA, h_keyB];
+    bool condition2         = hash1536(dPrimeA, dPrimeB, dPrimeC, dPrimeD, dPrimeE, dPrimeF, dPrimeG, dPrimeH, up, ar, vA, vB) == [h_ruA, h_ruB];
+    bool condition3         = hash512(vA, vB, u, padding)   == [oA, oB];
+    bool condition5         = hash2560(dPrimeA, dPrimeB, dPrimeC, dPrimeD, dPrimeE, dPrimeF, dPrimeG, dPrimeH, aA, aB, aC, aD, aE, aF, aG, aH, u, padding, padding, padding) == [h_daA, h_daB];
 
     return (condition1 && condition2 && condition3 && condition5);
 }

@@ -1,7 +1,0 @@
-import "utils/pack/bool/pack256" as pack256;
-import "utils/pack/bool/unpack128" as unpack128;
-
-def main(field f0, field f1) -> field {
-
-    return pack256([...unpack128(f0), ...unpack128(f1)]); 
-}

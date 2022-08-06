@@ -1,34 +1,6 @@
 import "./hash_1536" as hash1536;
 
 /*
-hash lengths:
-
-PBK     = 40  bytes cut down to 32 bytes = 256 bits
-u       = 16  bytes = 128 bits           = 256 bits padded
-d'      = 128 bytes = 1024 bits          = 1024 bits
-up      = 10  bytes = 80  bits           = 256 bits padded
-ar      = 10  bytes = 80  bits           = 256 bits padded
-t-limit = 4   bytes = 16  bits           = 256 bits padded
-o       = 32  bytes = 256 bits           = 256 bits padded
-a       = 128 bytes = 1024 bits          = 1024 bits
-v       = 20  bytes = 160 bits           = 256 bits padded
-n       = 10  bytes = 80  bits           = 256 bits padded
-c       = 60  bytes = 480 bits           = 512 bits padded
-e_rs    = 128 bytes = 1024 bits          = 1024 bits padded
-
-h_key       ->      PBK ++ u        -> 256 + 256        = 512               -> 512 
-h_ru        -> d'++up++ar++v++t_lim -> 1024 + 256 + 256 + 256 + 256 = 2048  -> 2048
-o           ->      v  ++  u        -> 256 + 256        = 512               -> 512 
-h_da        ->    d' ++ a ++ u      -> 1024+1024+256    = 2304 bits         -> 2560
-h_dp        ->         d'           -> 1024             = 1024 bits         -> 1024
-h_ipfs_d    ->    a  ++ o ++ c      -> 1024+256+512     = 1792 bits         -> 2048
-
-h_tx        ->      v  ++  n        -> 256 + 256        = 512 bits          -> 512 
-h_dn        ->    d  ++ v ++ n      -> 1024 + 256 + 256 = 1536 bits         -> 1536
-h_ipfs_p    ->     e_rs ++ c        -> 1024 + 512       = 1536 bits         -> 1536
-*/
-
-/*
 function implemented:
 
 function( private field u, public field PBK,
@@ -49,7 +21,7 @@ function( private field u, public field PBK,
 
 */
 
-def main(field e_rsA, field e_rsB, field e_rsC, field e_rsD, field cA, field cB, field h_ipfs_p) -> bool {   
+def main(field e_rsA, field e_rsB, field e_rsC, field e_rsD, field e_rsE, field e_rsF, field e_rsG, field e_rsH, field cA, field cB, field cC, field cD, field h_ipfs_pA, field h_ipfs_pB) -> bool {   
     //condition 6
-    return hash1536(e_rsA, e_rsB, e_rsC, e_rsD, cA, cB) == h_ipfs_p;
+    return hash1536(e_rsA, e_rsB, e_rsC, e_rsD, e_rsE, e_rsF, e_rsG, e_rsH, cA, cB, cC, cD) == [h_ipfs_pA, h_ipfs_pB];
 }

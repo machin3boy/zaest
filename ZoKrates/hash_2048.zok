@@ -1,19 +1,21 @@
-import "utils/pack/u32/pack256" as pack256;
 import "hashes/sha256/sha256" as sha256;
-import "./field_to_u32_8" as field_to_u32_8; 
+import "utils/pack/u32/pack128" as pack128;
+import "./fields_to_u32_8" as fields_to_u32_8;
 
-def main(field inputValueA, field inputValueB, field inputValueC, field inputValueD, field inputValueE, field inputValueF, field inputValueG, field inputValueH) -> field {
+def main(field inputA, field inputB, field inputC, field inputD, field inputE, field inputF, field inputG, field inputH, field inputI, field inputJ, field inputK, field inputL, field inputM, field inputN, field inputO, field inputP) -> field[2] {
 
-    u32[8] inputValueArrayA = field_to_u32_8(inputValueA);
-    u32[8] inputValueArrayB = field_to_u32_8(inputValueB);
-    u32[8] inputValueArrayC = field_to_u32_8(inputValueC);
-    u32[8] inputValueArrayD = field_to_u32_8(inputValueD);
-    u32[8] inputValueArrayE = field_to_u32_8(inputValueE);
-    u32[8] inputValueArrayF = field_to_u32_8(inputValueF);
-    u32[8] inputValueArrayG = field_to_u32_8(inputValueG);
-    u32[8] inputValueArrayH = field_to_u32_8(inputValueH);
-    u32[8] computedHash     = sha256([[...inputValueArrayA, ...inputValueArrayB], [...inputValueArrayC, ...inputValueArrayD], [...inputValueArrayE, ...inputValueArrayF], [...inputValueArrayG, ...inputValueArrayH]]);
+    u32[8] inputAB_u32_8 = fields_to_u32_8(inputA, inputB);
+    u32[8] inputCD_u32_8 = fields_to_u32_8(inputC, inputD);
+    u32[8] inputEF_u32_8 = fields_to_u32_8(inputE, inputF);
+    u32[8] inputGH_u32_8 = fields_to_u32_8(inputG, inputH);
+    u32[8] inputIJ_u32_8 = fields_to_u32_8(inputI, inputJ);
+    u32[8] inputKL_u32_8 = fields_to_u32_8(inputK, inputL);
+    u32[8] inputMN_u32_8 = fields_to_u32_8(inputM, inputN);
+    u32[8] inputOP_u32_8 = fields_to_u32_8(inputO, inputP);
 
-    return pack256(computedHash);
+
+    u32[8] hash = sha256([[...inputAB_u32_8, ...inputCD_u32_8], [...inputEF_u32_8, ...inputGH_u32_8], [...inputIJ_u32_8, ...inputKL_u32_8], [...inputMN_u32_8, ...inputOP_u32_8]]); 
+
+    return [pack128(hash[0..4]), pack128(hash[4..8])];
 }
 

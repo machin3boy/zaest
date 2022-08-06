@@ -1,61 +1,20 @@
 import "./aes" as aes;
-import "./field_to_u32_8" as field_to_u32_8;
-import "./field_to_packed_fields" as field_to_packed_fields;
 import "./hash_512" as hash512;
 import "./hash_1024" as hash1024;
 
-def verify_aes_1024_bits(field inputValueA, field inputValueB, field inputValueC, field inputValueD, field cipherValueA, field cipherValueB, field cipherValueC, field cipherValueD, field masterKey) -> bool {
+def verify_aes_1024_bits(field inputA, field inputB, field inputC, field inputD, field inputE, field inputF, field inputG, field inputH, field cipherA, field cipherB, field cipherC, field cipherD, field cipherE, field cipherF, field cipherG, field cipherH, field masterKey) -> bool {
 
-    field[2] inputValueA_128 = field_to_packed_fields(inputValueA);
-    field[2] inputValueB_128 = field_to_packed_fields(inputValueB);
-    field[2] inputValueC_128 = field_to_packed_fields(inputValueC);
-    field[2] inputValueD_128 = field_to_packed_fields(inputValueD);
-    field[2] cipherValueA_128 = field_to_packed_fields(cipherValueA);
-    field[2] cipherValueB_128 = field_to_packed_fields(cipherValueB);
-    field[2] cipherValueC_128 = field_to_packed_fields(cipherValueC);
-    field[2] cipherValueD_128 = field_to_packed_fields(cipherValueD);
-    field[2] masterKey_128    = field_to_packed_fields(masterKey);
-
-    bool check1 = aes(inputValueA_128[0], masterKey_128[0]) == cipherValueA_128[0];
-    bool check2 = aes(inputValueA_128[1], masterKey_128[0]) == cipherValueA_128[1];
-    bool check3 = aes(inputValueB_128[0], masterKey_128[0]) == cipherValueB_128[0];
-    bool check4 = aes(inputValueB_128[1], masterKey_128[0]) == cipherValueB_128[1];
-    bool check5 = aes(inputValueC_128[0], masterKey_128[0]) == cipherValueC_128[0];
-    bool check6 = aes(inputValueC_128[1], masterKey_128[0]) == cipherValueC_128[1];
-    bool check7 = aes(inputValueD_128[0], masterKey_128[0]) == cipherValueD_128[0];
-    bool check8 = aes(inputValueD_128[1], masterKey_128[0]) == cipherValueD_128[1];
+    bool check1 = aes(inputA, masterKey) == cipherA;
+    bool check2 = aes(inputB, masterKey) == cipherB;
+    bool check3 = aes(inputC, masterKey) == cipherC;
+    bool check4 = aes(inputD, masterKey) == cipherD;
+    bool check5 = aes(inputE, masterKey) == cipherE;
+    bool check6 = aes(inputF, masterKey) == cipherF;
+    bool check7 = aes(inputG, masterKey) == cipherG;
+    bool check8 = aes(inputH, masterKey) == cipherH;
 
     return (check1 && check2 && check3 && check4 && check5 && check6 && check7 && check8);
 }
-
-/*
-hash lengths:
-
-PBK     = 40  bytes cut down to 32 bytes = 256 bits
-u       = 16  bytes = 128 bits           = 256 bits padded
-d'      = 128 bytes = 1024 bits          = 1024 bits
-up      = 10  bytes = 80  bits           = 256 bits padded
-ar      = 10  bytes = 80  bits           = 256 bits padded
-t-limit = 4   bytes = 16  bits           = 256 bits padded
-o       = 32  bytes = 256 bits           = 256 bits padded
-a       = 128 bytes = 1024 bits          = 1024 bits
-v       = 20  bytes = 160 bits           = 256 bits padded
-n       = 10  bytes = 80  bits           = 256 bits padded
-c       = 60  bytes = 480 bits           = 512 bits padded
-e_rs    = 128 bytes = 1024 bits          = 1024 bits padded
-
-h_key       ->      PBK ++ u        -> 256 + 256        = 512               -> 512 
-h_ru        -> d'++up++ar++v++t_lim -> 1024 + 256 + 256 + 256 + 256 = 2048  -> 2048
-o           ->      v  ++  u        -> 256 + 256        = 512               -> 512 
-h_da        ->    d' ++ a ++ u      -> 1024+1024+256    = 2304 bits         -> 2560
-h_dp        ->         d'           -> 1024             = 1024 bits         -> 1024
-h_ipfs_d    ->    a  ++ o ++ c      -> 1024+256+512     = 1792 bits         -> 2048
-
-h_tx        ->      v  ++  n        -> 256 + 256        = 512 bits          -> 512 
-h_dn        ->    d  ++ v ++ n      -> 1024 + 256 + 256 = 1536 bits         -> 1536
-h_ipfs_p    ->     e_rs ++ c        -> 1024 + 512       = 1536 bits         -> 1536
-
-*/
 
 /*
 function implemented:
@@ -64,14 +23,13 @@ function(
     public field PBK, private field u,
     private field d', private field up,
     private field ar, private field v,
-    public field o,bpublic field a,
+    public field o, public field a,
     public field c, public field h_key,
     public field h_ru, public field h_da,
     public field h_dp, public field h_ipfs_d) {
         prove that:
             1. h_key == hash(PBK++u)
-            2. h_ru == hash(d' ++ up() ++ ar
-            ++ v ++ t_limit)
+            2. h_ru == hash(d' ++ up() ++ ar ++ v)
             3. o == hash(v ++ u)
             4. a == encrypt_AES(d', u)
             5. h_da == hash(d' ++ a ++ u)
@@ -80,11 +38,11 @@ function(
 }
 */
 
-def main(field PBK, private field u, private field dPrimeA, private field dPrimeB, private field dPrimeC, private field dPrimeD, field aA, field aB, field aC, field aD, field h_key, field h_dp) -> bool {
+def main(field PBK_A, field PBK_B, private field u, private field dPrimeA, private field dPrimeB, private field dPrimeC, private field dPrimeD, private field dPrimeE, private field dPrimeF, private field dPrimeG, private field dPrimeH, field aA, field aB, field aC, field aD, field aE, field aF, field aG, field aH, field h_keyA, field h_keyB, field h_dpA, field h_dpB, field padding) -> bool {
   
-    bool condition1         = hash512(PBK, u) == h_key;
-    bool condition4         = verify_aes_1024_bits(dPrimeA, dPrimeB, dPrimeC, dPrimeD, aA, aB, aC, aD, u);
-    bool condition6         = hash1024(dPrimeA, dPrimeB, dPrimeC, dPrimeD) == h_dp;
+    bool condition1         = hash512(PBK_A, PBK_B, u, padding) == [h_keyA, h_keyB];
+    bool condition4         = verify_aes_1024_bits(dPrimeA, dPrimeB, dPrimeC, dPrimeD, dPrimeE, dPrimeF, dPrimeG, dPrimeH, aA, aB, aC, aD, aE, aF, aG, aH, u);
+    bool condition6         = hash1024(dPrimeA, dPrimeB, dPrimeC, dPrimeD, dPrimeE, dPrimeF, dPrimeG, dPrimeH) == [h_dpA, h_dpB];
 
     return (condition1 && condition4 && condition6);
 }

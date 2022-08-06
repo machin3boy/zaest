@@ -1,48 +1,19 @@
 import "./hash_2048" as hash2048;
 
 /*
-hash lengths:
-
-PBK     = 40  bytes cut down to 32 bytes = 256 bits
-u       = 16  bytes = 128 bits           = 256 bits padded
-d'      = 128 bytes = 1024 bits          = 1024 bits
-up      = 10  bytes = 80  bits           = 256 bits padded
-ar      = 10  bytes = 80  bits           = 256 bits padded
-t-limit = 4   bytes = 16  bits           = 256 bits padded
-o       = 32  bytes = 256 bits           = 256 bits padded
-a       = 128 bytes = 1024 bits          = 1024 bits
-v       = 20  bytes = 160 bits           = 256 bits padded
-n       = 10  bytes = 80  bits           = 256 bits padded
-c       = 60  bytes = 480 bits           = 512 bits padded
-e_rs    = 128 bytes = 1024 bits          = 1024 bits padded
-
-h_key       ->      PBK ++ u        -> 256 + 256        = 512               -> 512 
-h_ru        -> d'++up++ar++v++t_lim -> 1024 + 256 + 256 + 256 + 256 = 2048  -> 2048
-o           ->      v  ++  u        -> 256 + 256        = 512               -> 512 
-h_da        ->    d' ++ a ++ u      -> 1024+1024+256    = 2304 bits         -> 2560
-h_dp        ->         d'           -> 1024             = 1024 bits         -> 1024
-h_ipfs_d    ->    a  ++ o ++ c      -> 1024+256+512     = 1792 bits         -> 2048
-
-h_tx        ->      v  ++  n        -> 256 + 256        = 512 bits          -> 512 
-h_dn        ->    d  ++ v ++ n      -> 1024 + 256 + 256 = 1536 bits         -> 1536
-h_ipfs_p    ->     e_rs ++ c        -> 1024 + 512       = 1536 bits         -> 1536
-*/
-
-/*
 function implemented:
 
 function(
     public field PBK, private field u,
     private field d', private field up,
     private field ar, private field v,
-    public field o,bpublic field a,
+    public field o, public field a,
     public field c, public field h_key,
     public field h_ru, public field h_da,
     public field h_dp, public field h_ipfs_d) {
         prove that:
             1. h_key == hash(PBK++u)
-            2. h_ru == hash(d' ++ up() ++ ar
-            ++ v ++ t_limit)
+            2. h_ru == hash(d' ++ up() ++ ar ++ v)
             3. o == hash(v ++ u)
             4. a == encrypt_AES(d', u)
             5. h_da == hash(d' ++ a ++ u)
@@ -51,8 +22,8 @@ function(
 }
 */
 
-def main(field aA, field aB, field aC, field aD, field o, field cA, field cB, field h_ipfs_d, field padding) -> bool {  
+def main(field aA, field aB, field aC, field aD, field aE, field aF, field aG, field aH, field oA, field oB, field cA, field cB, field cC, field cD, field h_ipfs_dA, field h_ipfs_dB, field padding) -> bool {  
     //condition 7
-    return hash2048(aA, aB, aC, aD, o, cA, cB, padding) == h_ipfs_d;
+    return hash2048(aA, aB, aC, aD, aE, aF, aG, aH, oA, oB, cA, cB, cC, cD, padding, padding) == [h_ipfs_dA, h_ipfs_dB];
 }
 

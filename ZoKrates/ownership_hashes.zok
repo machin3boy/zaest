@@ -3,34 +3,6 @@ import "./hash_1536" as hash1536;
 import "./hash_2560" as hash2560;
 
 /*
-hash lengths:
-
-PBK     = 40  bytes cut down to 32 bytes = 256 bits
-u       = 16  bytes = 128 bits           = 256 bits padded
-d'      = 128 bytes = 1024 bits          = 1024 bits
-up      = 10  bytes = 80  bits           = 256 bits padded
-ar      = 10  bytes = 80  bits           = 256 bits padded
-t-limit = 4   bytes = 16  bits           = 256 bits padded
-o       = 32  bytes = 256 bits           = 256 bits padded
-a       = 128 bytes = 1024 bits          = 1024 bits
-v       = 20  bytes = 160 bits           = 256 bits padded
-n       = 10  bytes = 80  bits           = 256 bits padded
-c       = 60  bytes = 480 bits           = 512 bits padded
-e_rs    = 128 bytes = 1024 bits          = 1024 bits padded
-
-h_key       ->      PBK ++ u        -> 256 + 256        = 512               -> 512 
-h_ru        -> d'++up++ar++v++t_lim -> 1024 + 256 + 256 + 256 + 256 = 2048  -> 2048
-o           ->      v  ++  u        -> 256 + 256        = 512               -> 512 
-h_da        ->    d' ++ a ++ u      -> 1024+1024+256    = 2304 bits         -> 2560
-h_dp        ->         d'           -> 1024             = 1024 bits         -> 1024
-h_ipfs_d    ->    a  ++ o ++ c      -> 1024+256+512     = 1792 bits         -> 2048
-
-h_tx        ->      v  ++  n        -> 256 + 256        = 512 bits          -> 512 
-h_dn        ->    d  ++ v ++ n      -> 1024 + 256 + 256 = 1536 bits         -> 1536
-h_ipfs_p    ->     e_rs ++ c        -> 1024 + 512       = 1536 bits         -> 1536
-*/
-
-/*
 function implemented:
 
 function( private field u, public field PBK,
@@ -51,13 +23,13 @@ function( private field u, public field PBK,
 
 */
 
-def main(field PBK, private field u, private field dA, private field dB, private field dC, private field dD, private field v, field aA, field aB, field aC, field aD, field o, field n, field h_key, field h_tx, field h_da, field h_dn, field padding) -> bool {  
+def main(field PBK_A, field PBK_B, private field u, private field dA, private field dB, private field dC, private field dD, private field dE, private field dF, private field dG, private field dH, private field vA, private field vB, field aA, field aB, field aC, field aD, field aE, field aF, field aG, field aH, field oA, field oB, field n, field h_keyA, field h_keyB, field h_txA, field h_txB, field h_daA, field h_daB, field h_dnA, field h_dnB, field padding) -> bool {  
 
-    bool condition1         = hash512(PBK, u) == h_key;
-    bool condition2         = hash512(v, n) == h_tx;
-    bool condition3         = hash512(v, u) == o;
-    bool condition4         = hash2560(dA, dB, dC, dD, aA, aB, aC, aD, u, padding) == h_da;
-    bool condition5         = hash1536(dA, dB, dC, dD, v, n) == h_dn;
+    bool condition1         = hash512(PBK_A, PBK_B, u, padding) == [h_keyA, h_keyB];
+    bool condition2         = hash512(vA, vB, n, padding) == [h_txA, h_txB];
+    bool condition3         = hash512(vA, vB, u, padding) == [oA, oB];
+    bool condition4         = hash2560(dA, dB, dC, dD, dE, dF, dG, dH, aA, aB, aC, aD, aE, aF, aG, aH, u, padding, padding, padding) == [h_daA, h_daB];
+    bool condition5         = hash1536(dA, dB, dC, dD, dE, dF, dG, dH, vA, vB, n, padding) == [h_dnA, h_dnB];
 
     return (condition1 && condition2 && condition3 && condition4 && condition5);
 }
