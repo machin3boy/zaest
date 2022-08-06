@@ -234,14 +234,14 @@ def encrypt_block(u8[16] plaintext, u8[11][4][4] key_matrices) -> u8[16]{
     return matrix2bytes(plain_state);
 }
 
-def main(field plaintext, field ciphertext, field master_key) -> bool{
+def main(field plaintext, field master_key) -> field{
     // field to u8[16]
     u8[16] plaintext_u8_16 = field_to_u8_16(plaintext);
     u8[16] master_key_u8_16 = field_to_u8_16(master_key);
 
     u8[11][4][4] key_matrices = expand_key(master_key_u8_16); // key expand
     u8[16] cipher = encrypt_block(plaintext_u8_16, key_matrices);
-    return u8_16_to_field(cipher) == ciphertext;
+    return u8_16_to_field(cipher);
 }
 
 

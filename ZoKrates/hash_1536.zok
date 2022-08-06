@@ -1,0 +1,17 @@
+import "utils/pack/u32/pack256" as pack256;
+import "hashes/sha256/1536bit" as hash1536;
+import "./field_to_u32_8" as field_to_u32_8;
+
+def main(field inputValueA, field inputValueB, field inputValueC, field inputValueD, field inputValueE, field inputValueF) -> field {
+
+    u32[8] inputValueArrayA = field_to_u32_8(inputValueA);
+    u32[8] inputValueArrayB = field_to_u32_8(inputValueB);
+    u32[8] inputValueArrayC = field_to_u32_8(inputValueC);
+    u32[8] inputValueArrayD = field_to_u32_8(inputValueD);
+    u32[8] inputValueArrayE = field_to_u32_8(inputValueE);
+    u32[8] inputValueArrayF = field_to_u32_8(inputValueF);
+    u32[8] computedHash     = hash1536(inputValueArrayA, inputValueArrayB, inputValueArrayC, inputValueArrayD, inputValueArrayE, inputValueArrayF);
+
+    return pack256(computedHash);
+}
+

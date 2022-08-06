@@ -1,0 +1,10 @@
+import "utils/pack/bool/unpack256" as unpack256;
+import "utils/casts/u32_from_bits" as u32_from_bits;
+
+def main(field f) -> u32[8] {
+
+    bool[256] bits = unpack256(f);
+
+    return [u32_from_bits(bits[0..32]), u32_from_bits(bits[32..64]), u32_from_bits(bits[64..96]), u32_from_bits(bits[96..128]), u32_from_bits(bits[128..160]), u32_from_bits(bits[160..192]), u32_from_bits(bits[192..224]), u32_from_bits(bits[224..256])];
+}
+

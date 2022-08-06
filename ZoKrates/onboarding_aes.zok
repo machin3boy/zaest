@@ -1,58 +1,8 @@
-import "./aes.zok" as aes;
-import "utils/pack/bool/unpack256" as unpack256;
-import "utils/pack/bool/unpack128" as unpack128;
-import "utils/pack/u32/pack128" as pack128;
-import "utils/casts/u32_from_bits" as u32_from_bits;
-import "hashes/sha256/sha256.zok" as sha256;
-import "hashes/sha256/256bitPadded.zok" as hash256;
-import "hashes/sha256/512bit.zok" as hash512;
-import "hashes/sha256/1024bit.zok" as hash1024;
-
-def field_to_u32_8(field f) -> u32[8] {
-
-    bool[256] bits = unpack256(f);
-
-    return [u32_from_bits(bits[0..32]), u32_from_bits(bits[32..64]), u32_from_bits(bits[64..96]), u32_from_bits(bits[96..128]), u32_from_bits(bits[128..160]), u32_from_bits(bits[160..192]), u32_from_bits(bits[192..224]), u32_from_bits(bits[224..256])];
-}
-
-def field_to_packed_fields(field f) -> field[2] {
-
-    u32[8] f_to_u32_8 = field_to_u32_8(f);
-
-    return [pack128(f_to_u32_8[0..4]), pack128(f_to_u32_8[4..8])];
-}
-
-def verify_hash_256_bits(field inputValue, field inputHash) -> bool {
-
-    u32[8] inputValueArray = field_to_u32_8(inputValue);
-    u32[8] inputHashArray  = field_to_u32_8(inputHash); 
-    u32[8] computedHash    = hash256(inputValueArray);
-
-    return computedHash == inputHashArray;
-}
-
-def verify_hash_512_bits(field inputValueA, field inputValueB, field inputHash) -> bool {
-
-    u32[8] inputValueArrayA = field_to_u32_8(inputValueA);
-    u32[8] inputValueArrayB = field_to_u32_8(inputValueB);
-    u32[8] inputHashArray   = field_to_u32_8(inputHash);
-    u32[8] computedHash     = hash512(inputValueArrayA, inputValueArrayB);
-
-    return computedHash == inputHashArray;
-}
-
-def verify_hash_1024_bits(field inputValueA, field inputValueB, field inputValueC, field inputValueD, field inputHash) -> bool {
-
-    u32[8] inputValueArrayA = field_to_u32_8(inputValueA);
-    u32[8] inputValueArrayB = field_to_u32_8(inputValueB);
-    u32[8] inputValueArrayC = field_to_u32_8(inputValueC);
-    u32[8] inputValueArrayD = field_to_u32_8(inputValueD);
-    u32[8] inputHashArray   = field_to_u32_8(inputHash);
-    u32[8] computedHash     = hash1024(inputValueArrayA, inputValueArrayB, inputValueArrayC, inputValueArrayD);
-
-    return computedHash == inputHashArray;
-
-}
+import "./aes" as aes;
+import "./field_to_u32_8" as field_to_u32_8;
+import "./field_to_packed_fields" as field_to_packed_fields;
+import "./hash_512" as hash512;
+import "./hash_1024" as hash1024;
 
 def verify_aes_1024_bits(field inputValueA, field inputValueB, field inputValueC, field inputValueD, field cipherValueA, field cipherValueB, field cipherValueC, field cipherValueD, field masterKey) -> bool {
 
@@ -66,14 +16,14 @@ def verify_aes_1024_bits(field inputValueA, field inputValueB, field inputValueC
     field[2] cipherValueD_128 = field_to_packed_fields(cipherValueD);
     field[2] masterKey_128    = field_to_packed_fields(masterKey);
 
-    bool check1 = aes(inputValueA_128[0], cipherValueA_128[0], masterKey_128[0]);
-    bool check2 = aes(inputValueA_128[1], cipherValueA_128[1], masterKey_128[0]);
-    bool check3 = aes(inputValueB_128[0], cipherValueB_128[0], masterKey_128[0]);
-    bool check4 = aes(inputValueB_128[1], cipherValueB_128[1], masterKey_128[0]);
-    bool check5 = aes(inputValueC_128[0], cipherValueC_128[0], masterKey_128[0]);
-    bool check6 = aes(inputValueC_128[1], cipherValueC_128[1], masterKey_128[0]);
-    bool check7 = aes(inputValueD_128[0], cipherValueD_128[0], masterKey_128[0]);
-    bool check8 = aes(inputValueD_128[1], cipherValueD_128[1], masterKey_128[0]);
+    bool check1 = aes(inputValueA_128[0], masterKey_128[0]) == cipherValueA_128[0];
+    bool check2 = aes(inputValueA_128[1], masterKey_128[0]) == cipherValueA_128[1];
+    bool check3 = aes(inputValueB_128[0], masterKey_128[0]) == cipherValueB_128[0];
+    bool check4 = aes(inputValueB_128[1], masterKey_128[0]) == cipherValueB_128[1];
+    bool check5 = aes(inputValueC_128[0], masterKey_128[0]) == cipherValueC_128[0];
+    bool check6 = aes(inputValueC_128[1], masterKey_128[0]) == cipherValueC_128[1];
+    bool check7 = aes(inputValueD_128[0], masterKey_128[0]) == cipherValueD_128[0];
+    bool check8 = aes(inputValueD_128[1], masterKey_128[0]) == cipherValueD_128[1];
 
     return (check1 && check2 && check3 && check4 && check5 && check6 && check7 && check8);
 }
@@ -132,9 +82,9 @@ function(
 
 def main(field PBK, private field u, private field dPrimeA, private field dPrimeB, private field dPrimeC, private field dPrimeD, field aA, field aB, field aC, field aD, field h_key, field h_dp) -> bool {
   
-    bool condition1         = verify_hash_512_bits(PBK, u, h_key);
+    bool condition1         = hash512(PBK, u) == h_key;
     bool condition4         = verify_aes_1024_bits(dPrimeA, dPrimeB, dPrimeC, dPrimeD, aA, aB, aC, aD, u);
-    bool condition6         = verify_hash_1024_bits(dPrimeA, dPrimeB, dPrimeC, dPrimeD, h_dp);
+    bool condition6         = hash1024(dPrimeA, dPrimeB, dPrimeC, dPrimeD) == h_dp;
 
     return (condition1 && condition4 && condition6);
 }

@@ -1,39 +1,4 @@
-import "utils/pack/bool/unpack256" as unpack256;
-import "utils/pack/bool/unpack128" as unpack128;
-import "utils/pack/u32/pack128" as pack128;
-import "utils/casts/u32_from_bits" as u32_from_bits;
-import "hashes/sha256/sha256.zok" as sha256;
-import "hashes/sha256/256bitPadded.zok" as hash256;
-
-def field_to_u32_8(field f) -> u32[8] {
-
-    bool[256] bits = unpack256(f);
-
-    return [u32_from_bits(bits[0..32]), u32_from_bits(bits[32..64]), u32_from_bits(bits[64..96]), u32_from_bits(bits[96..128]), u32_from_bits(bits[128..160]), u32_from_bits(bits[160..192]), u32_from_bits(bits[192..224]), u32_from_bits(bits[224..256])];
-}
-
-def field_to_packed_fields(field f) -> field[2] {
-
-    u32[8] f_to_u32_8 = field_to_u32_8(f);
-
-    return [pack128(f_to_u32_8[0..4]), pack128(f_to_u32_8[4..8])];
-}
-
-def verify_hash_2048_bits(field inputValueA, field inputValueB, field inputValueC, field inputValueD, field inputValueE, field inputValueF, field inputValueG, field inputValueH, field inputHash) -> bool {
-
-    u32[8] inputValueArrayA = field_to_u32_8(inputValueA);
-    u32[8] inputValueArrayB = field_to_u32_8(inputValueB);
-    u32[8] inputValueArrayC = field_to_u32_8(inputValueC);
-    u32[8] inputValueArrayD = field_to_u32_8(inputValueD);
-    u32[8] inputValueArrayE = field_to_u32_8(inputValueE);
-    u32[8] inputValueArrayF = field_to_u32_8(inputValueF);
-    u32[8] inputValueArrayG = field_to_u32_8(inputValueG);
-    u32[8] inputValueArrayH = field_to_u32_8(inputValueH);
-    u32[8] inputHashArray   = field_to_u32_8(inputHash);
-    u32[8] computedHash     = sha256([[...inputValueArrayA, ...inputValueArrayB], [...inputValueArrayC, ...inputValueArrayD], [...inputValueArrayE, ...inputValueArrayF], [...inputValueArrayG, ...inputValueArrayH]]);
-
-    return computedHash == inputHashArray;
-}
+import "./hash_2048" as hash2048;
 
 /*
 hash lengths:
@@ -88,6 +53,6 @@ function(
 
 def main(field aA, field aB, field aC, field aD, field o, field cA, field cB, field h_ipfs_d, field padding) -> bool {  
     //condition 7
-    return verify_hash_2048_bits(aA, aB, aC, aD, o, cA, cB, padding, h_ipfs_d); 
+    return hash2048(aA, aB, aC, aD, o, cA, cB, padding) == h_ipfs_d;
 }
 
