@@ -1,4 +1,6 @@
-import "./hash_1536" as hash1536;
+import "./field_to_u8_16" as field_to_u8_16;
+import "utils/pack/u32/unpack128" as unpack128;
+import "hashes/sha256/sha256Padded" as sha256;
 
 /*
 function implemented:
@@ -21,7 +23,7 @@ function( private field u, public field PBK,
 
 */
 
-def main(field e_rsA, field e_rsB, field e_rsC, field e_rsD, field e_rsE, field e_rsF, field e_rsG, field e_rsH, field cA, field cB, field cC, field cD, field h_ipfs_pA, field h_ipfs_pB) -> bool {   
+def main(field e_rsA, field e_rsB, field e_rsC, field e_rsD, field cA, field cB, field cC, field cD, field h_ipfs_pA, field h_ipfs_pB) -> bool {   
     //condition 6
-    return hash1536(e_rsA, e_rsB, e_rsC, e_rsD, e_rsE, e_rsF, e_rsG, e_rsH, cA, cB, cC, cD) == [h_ipfs_pA, h_ipfs_pB];
+    return sha256([...field_to_u8_16(e_rsA), ...field_to_u8_16(e_rsB), ...field_to_u8_16(e_rsC), ...field_to_u8_16(e_rsD), ...field_to_u8_16(cA), ...field_to_u8_16(cB), ...field_to_u8_16(cC), ...field_to_u8_16(cD)]) == [...unpack128(h_ipfs_pA), ...unpack128(h_ipfs_pB)];
 }

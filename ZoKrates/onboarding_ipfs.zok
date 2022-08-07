@@ -1,4 +1,6 @@
-import "./hash_2048" as hash2048;
+import "./field_to_u8_16" as field_to_u8_16;
+import "utils/pack/u32/unpack128" as unpack128;
+import "hashes/sha256/sha256Padded" as sha256;
 
 /*
 function implemented:
@@ -22,8 +24,8 @@ function(
 }
 */
 
-def main(field aA, field aB, field aC, field aD, field aE, field aF, field aG, field aH, field oA, field oB, field cA, field cB, field cC, field cD, field h_ipfs_dA, field h_ipfs_dB, field padding) -> bool {  
+def main(field aA, field aB, field aC, field aD, field oA, field oB, field cA, field cB, field cC, field cD, field h_ipfs_dA, field h_ipfs_dB) -> bool {  
     //condition 7
-    return hash2048(aA, aB, aC, aD, aE, aF, aG, aH, oA, oB, cA, cB, cC, cD, padding, padding) == [h_ipfs_dA, h_ipfs_dB];
+    return sha256([...field_to_u8_16(aA), ...field_to_u8_16(aB), ...field_to_u8_16(aC), ...field_to_u8_16(aD), ...field_to_u8_16(oA), ...field_to_u8_16(oB), ...field_to_u8_16(cA), ...field_to_u8_16(cB), ...field_to_u8_16(cC), ...field_to_u8_16(cD)]) == [...unpack128(h_ipfs_dA), ...unpack128(h_ipfs_dB)];
 }
 

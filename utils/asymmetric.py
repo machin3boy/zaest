@@ -8,8 +8,6 @@ import os
 from Crypto.Util import Counter
 from Crypto import Random
 
-################################### METHODS ###################################
-
 #returns a SHA256 hash of a string
 def generate_hash(s):
     return hashlib.sha256(s.encode('utf-8')).hexdigest()
@@ -34,7 +32,7 @@ def encrypt_PBK(message, public_key):
     encrypted_text = rsa_public_key.encrypt(message)
     return base64.b64encode(encrypted_text)
 
-#decrypts a message with a key (private_key can be public_key)
+#decrypts a message with a key
 def decrypt_PVK(encoded_encrypted_msg, private_key):
     rsa_private_key = RSA.importKey(private_key)
     rsa_private_key = PKCS1_OAEP.new(rsa_private_key)

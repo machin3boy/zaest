@@ -1,19 +1,16 @@
 import "./aes" as aes;
-import "./hash_512" as hash512;
-import "./hash_1024" as hash1024;
+import "./field_to_u8_16" as field_to_u8_16;
+import "utils/pack/u32/unpack128" as unpack128;
+import "hashes/sha256/sha256Padded" as sha256;
 
-def verify_aes_1024_bits(field inputA, field inputB, field inputC, field inputD, field inputE, field inputF, field inputG, field inputH, field cipherA, field cipherB, field cipherC, field cipherD, field cipherE, field cipherF, field cipherG, field cipherH, field masterKey) -> bool {
+def verify_aes(field inputA, field inputB, field inputC, field inputD, field cipherA, field cipherB, field cipherC, field cipherD, field masterKey) -> bool {
 
     bool check1 = aes(inputA, masterKey) == cipherA;
     bool check2 = aes(inputB, masterKey) == cipherB;
     bool check3 = aes(inputC, masterKey) == cipherC;
     bool check4 = aes(inputD, masterKey) == cipherD;
-    bool check5 = aes(inputE, masterKey) == cipherE;
-    bool check6 = aes(inputF, masterKey) == cipherF;
-    bool check7 = aes(inputG, masterKey) == cipherG;
-    bool check8 = aes(inputH, masterKey) == cipherH;
 
-    return (check1 && check2 && check3 && check4 && check5 && check6 && check7 && check8);
+    return (check1 && check2 && check3 && check4);
 }
 
 /*
@@ -38,11 +35,11 @@ function(
 }
 */
 
-def main(field PBK_A, field PBK_B, private field u, private field dPrimeA, private field dPrimeB, private field dPrimeC, private field dPrimeD, private field dPrimeE, private field dPrimeF, private field dPrimeG, private field dPrimeH, field aA, field aB, field aC, field aD, field aE, field aF, field aG, field aH, field h_keyA, field h_keyB, field h_dpA, field h_dpB, field padding) -> bool {
+def main(field PBK_A, field PBK_B, private field u, private field dPrimeA, private field dPrimeB, private field dPrimeC, private field dPrimeD, field aA, field aB, field aC, field aD, field h_keyA, field h_keyB, field h_dpA, field h_dpB) -> bool {
   
-    bool condition1         = hash512(PBK_A, PBK_B, u, padding) == [h_keyA, h_keyB];
-    bool condition4         = verify_aes_1024_bits(dPrimeA, dPrimeB, dPrimeC, dPrimeD, dPrimeE, dPrimeF, dPrimeG, dPrimeH, aA, aB, aC, aD, aE, aF, aG, aH, u);
-    bool condition6         = hash1024(dPrimeA, dPrimeB, dPrimeC, dPrimeD, dPrimeE, dPrimeF, dPrimeG, dPrimeH) == [h_dpA, h_dpB];
+    bool condition1         = sha256([...field_to_u8_16(PBK_A), ...field_to_u8_16(PBK_B), ...field_to_u8_16(u)]) == [...unpack128(h_keyA), ...unpack128(h_keyB)];
+    bool condition4         = verify_aes(dPrimeA, dPrimeB, dPrimeC, dPrimeD, aA, aB, aC, aD, u);
+    bool condition6         = sha256([...field_to_u8_16(dPrimeA), ...field_to_u8_16(dPrimeB), ...field_to_u8_16(dPrimeC), ...field_to_u8_16(dPrimeD)]) == [...unpack128(h_dpA), ...unpack128(h_dpB)];
 
     return (condition1 && condition4 && condition6);
 }

@@ -516,7 +516,7 @@ def encrypt_128_bytes(message, key):
     message_chunks = [m.encode('utf-8') for m in message_chunks]
     key_object = AES(key)
     cipher  = [key_object.encrypt_block(m) for m in message_chunks]
-    cipher  = "".join([str(c.hex()) for c in cipher])
+    cipher  = " ".join([str(c.hex()) for c in cipher])
 
     return cipher
 
