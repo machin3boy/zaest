@@ -1,0 +1,50 @@
+import "./field_to_u8_16" as field_to_u8_16;
+import "utils/pack/u32/unpack128" as unpack128;
+import "hashes/sha256/sha256Padded" as sha256;
+import "utils/pack/u32/pack128" as pack128;
+
+/*
+function implemented:
+
+function(
+    public field PBK, private field u,
+    private field d', private field up,
+    private field ar, private field v,
+    public field o, public field a,
+    public field c, public field h_key,
+    public field h_ru, public field h_da,
+    public field h_dp, public field h_ipfs_d) {
+        prove that:
+            1. h_key == hash(PBK++u)
+            2. h_ru == hash(d' ++ up() ++ ar ++ v)
+            3. o == hash(v ++ u)
+            4. a == encrypt_AES(d', u)
+            5. h_da == hash(d' ++ a ++ u)
+            6. h_dp == hash(d')
+            7. h_ipfs_d == hash(a ++ o ++ c)
+}
+*/
+
+def main(field PBK_A, field PBK_B, private field u, private field dPrimeA, private field dPrimeB, private field dPrimeC, private field dPrimeD, field aA, field aB, field aC, field aD, field up, field vA, field vB, field ar, field oA, field oB, field cA, field cB, field cC, field cD) -> field[12] {
+
+    u32[8] h_key               = sha256([...field_to_u8_16(PBK_A), ...field_to_u8_16(PBK_B), ...field_to_u8_16(u)]);
+    field[2] h_key_fields      = [pack128(h_key[0..4]), pack128(h_key[4..8])];
+
+    u32[8] h_ru                = sha256([...field_to_u8_16(dPrimeA), ...field_to_u8_16(dPrimeB), ...field_to_u8_16(dPrimeC), ...field_to_u8_16(dPrimeD), ...field_to_u8_16(up), ...field_to_u8_16(ar), ...field_to_u8_16(vA), ...field_to_u8_16(vB)]);
+    field[2] h_ru_fields       = [pack128(h_ru[0..4]), pack128(h_ru[4..8])];
+  
+    u32[8] o                   = sha256([...field_to_u8_16(vA), ...field_to_u8_16(vB), ...field_to_u8_16(u)]);
+    field[2] o_fields          = [pack128(o[0..4]), pack128(o[4..8])];
+
+    u32[8] h_da                = sha256([...field_to_u8_16(dPrimeA), ...field_to_u8_16(dPrimeB), ...field_to_u8_16(dPrimeC), ...field_to_u8_16(dPrimeD), ...field_to_u8_16(aA), ...field_to_u8_16(aB), ...field_to_u8_16(aC), ...field_to_u8_16(aD), ...field_to_u8_16(u)]);
+    field[2] h_da_fields       = [pack128(h_da[0..4]), pack128(h_da[4..8])];
+
+    u32[8] h_dp                = sha256([...field_to_u8_16(dPrimeA), ...field_to_u8_16(dPrimeB), ...field_to_u8_16(dPrimeC), ...field_to_u8_16(dPrimeD)]);
+    field[2] h_dp_fields       = [pack128(h_dp[0..4]), pack128(h_dp[4..8])];
+
+    u32[8] h_ipfs_d            = sha256([...field_to_u8_16(aA), ...field_to_u8_16(aB), ...field_to_u8_16(aC), ...field_to_u8_16(aD), ...field_to_u8_16(oA), ...field_to_u8_16(oB), ...field_to_u8_16(cA), ...field_to_u8_16(cB), ...field_to_u8_16(cC), ...field_to_u8_16(cD)]);
+    field[2] h_ipfs_d_fields   = [pack128(h_ipfs_d[0..4]), pack128(h_ipfs_d[4..8])];
+    
+    return [...h_key_fields, ...h_ru_fields, ...o_fields, ...h_da_fields, ...h_dp_fields, ...h_ipfs_d_fields];
+}
+

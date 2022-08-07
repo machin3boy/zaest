@@ -510,7 +510,7 @@ def decrypt(key, ciphertext, workload=100000):
 
     return AES(key).decrypt_cbc(ciphertext, iv)
 
-def encrypt_128_bytes(message, key):
+def encrypt_64_bytes(message, key):
     key = bytes(key.encode('utf-8'))
     message_chunks = [message[i:i+16] for i in range(0, len(message), 16)]
     message_chunks = [m.encode('utf-8') for m in message_chunks]
@@ -547,10 +547,10 @@ def test_one_block():
     print("decrypted message as ints:", [v for v in d]) 
     print(d.decode("utf-8"))
 
-def test_128_bytes():
-    print(encrypt_128_bytes("16 byte message."*8, "veratestkey12345"))
+def test_64_bytes():
+    print(encrypt_64_bytes("16 byte message."*4, "veratestkey12345"))
    
 if __name__ == '__main__':
     test_one_block()
     print()
-    test_128_bytes()
+    test_64_bytes()
