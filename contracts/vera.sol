@@ -28,42 +28,41 @@ contract Vera {
     mapping (address => mapping (string => string[2])) userDataIPFS;
 
     //encrypted requests to update data from verifiers
-    mapping (address => mapping (address => mapping (string => string[4]))) public dataUpdateRequests;
-    mapping (address => mapping (address => mapping (string => uint))) public dataUpdateRequestTimeLimits;
+    mapping (address => mapping (address => mapping (uint => string[2]))) public dataUpdateRequestsStrVar;
+    mapping (address => mapping (address => mapping (uint => uint[3]))) public dataUpdateRequestIntVar;
  
     //permissions verifiers have for specific update functionality
     mapping (address => mapping (string => bool)) public updateFunctionPermissions;
 
     //encrypted requests to verify ownership of user data
-    mapping (address => mapping (address => mapping (string => string[2]))) public dataProofRequests;
+    mapping (address => mapping (address => mapping (uint => string))) public dataProofRequestsStrVar;
+    mapping (address => mapping (address => mapping (uint => uint))) public dataProofRequestsIntVar;
     //encrypted user proofs of ownership submitted to the smart contract
-    mapping (address => mapping (address => mapping (string => string[3]))) public userProofSmartContract;
+    mapping (address => mapping (address => mapping (uint => string[3]))) public userProofSmartContract;
     //encrypted user proofs of ownership submitted to IPFS
-    mapping (address => mapping (address => mapping (string => string[4]))) public userProofIPFS;
+    mapping (address => mapping (address => mapping (uint => string[4]))) public userProofIPFS;
 
     //valid registered verifiers
     mapping (address => bool) registeredVerifiers;
 
     //verifiers place their requests for users to update data through this function
-    function placeDataUpdateRequest(address userPBK, string memory nonce, string memory encryptedRequest, 
-                                    string memory encryptedKey, string memory hashedData, 
-                                    string memory hashedRequest, uint timelimit) public {
+    function placeDataUpdateRequest(address userPBK, uint nonce, string memory encryptedRequest, 
+                                    string memory encryptedKey, uint hashOfData, 
+                                    uint hashOfRequest, uint timelimit) public {
         require(registeredVerifiers[msg.sender], "You must be a registered verifier to submit requests to update data");
         require(timelimit >= 10, "Verifiers must allow for at least ten seconds to onboard data");
-        dataUpdateRequests[msg.sender][userPBK][nonce][0] = encryptedRequest;
-        dataUpdateRequests[msg.sender][userPBK][nonce][1] = encryptedKey;
-        dataUpdateRequests[msg.sender][userPBK][nonce][2] = hashedData;
-        dataUpdateRequests[msg.sender][userPBK][nonce][3] = hashedRequest;
-        dataUpdateRequestTimeLimits[msg.sender][userPBK][nonce] = block.timestamp + timelimit;
+        dataUpdateRequestsStrVar[msg.sender][userPBK][nonce][0] = encryptedRequest;
+        dataUpdateRequestsStrVar[msg.sender][userPBK][nonce][1] = encryptedKey;
+        dataUpdateRequestIntVar[msg.sender][userPBK][nonce][0] = hashOfData;
+        dataUpdateRequestIntVar[msg.sender][userPBK][nonce][1] = hashOfRequest;
+        dataUpdateRequestIntVar[msg.sender][userPBK][nonce][2] = block.timestamp + timelimit;
     }
 
     //verifiers place their requests for users to prove ownership of data through this function
-    function placeDataProofRequest(address userPBK, string memory nonce, string memory encryptedRequest, 
-                                    string memory transactionHash) public {
+    function placeDataProofRequest(address userPBK, uint nonce, string memory encryptedRequest, 
+                                    uint transactionHash) public {
         require(registeredVerifiers[msg.sender], "You must be a registered verifier to submit requests to prove ownership of data");
-        dataProofRequests[msg.sender][userPBK][nonce][0] = encryptedRequest;
-        dataProofRequests[msg.sender][userPBK][nonce][1] = transactionHash;
+        dataProofRequestsStrVar[msg.sender][userPBK][nonce] = encryptedRequest;
+        dataProofRequestsIntVar[msg.sender][userPBK][nonce] = transactionHash;
     } 
-
-
 }
