@@ -30,10 +30,7 @@ contract Vera {
     mapping (address => uint[2]) public userKeychain;
     //encrypted user data housed in the smart contract
     mapping (address => mapping (uint => mapping (uint => uint[6]))) userDataSmartContract;
-<<<<<<< HEAD
 
-=======
->>>>>>> 80fd4b5aff23482646edae4f7a7270e70c7f41ec
     //encrypted user data housed on IPFS
     mapping (address => mapping (uint => mapping (uint => uint[6]))) userDataIPFS;
 
@@ -46,18 +43,12 @@ contract Vera {
 
     //encrypted requests to verify ownership of user data
     mapping (address => mapping (address => mapping (uint => string))) public dataProofRequestsStrVar;
-<<<<<<< HEAD
     mapping (address => mapping (address => mapping (uint => uint[2]))) public dataProofRequestsIntVar;
 
     //encrypted user proofs of ownership submitted to the smart contract
     mapping (address => mapping (address => mapping (uint => string[2]))) public userProofSmartContractStrVar;
     mapping (address => mapping (address => mapping (uint => uint[2]))) public userProofSmartContractIntVar;
 
-=======
-    mapping (address => mapping (address => mapping (uint => uint))) public dataProofRequestsIntVar;
-    //encrypted user proofs of ownership submitted to the smart contract
-    mapping (address => mapping (address => mapping (uint => string[3]))) public userProofSmartContract;
->>>>>>> 80fd4b5aff23482646edae4f7a7270e70c7f41ec
     //encrypted user proofs of ownership submitted to IPFS
     mapping (address => mapping (address => mapping (uint => string[4]))) public userProofIPFS;
 
@@ -66,34 +57,22 @@ contract Vera {
 
     //verifiers place their requests for users to update data through this function
     function placeDataUpdateRequest(address userPBK, uint nonce, string memory encryptedRequest, 
-<<<<<<< HEAD
                                     string memory encryptedKey, uint hashOfData0,
                                     uint hashOfData1, uint hashOfRequest0,
                                     uint hashOfRequest1, uint timelimit) public {
-=======
-                                    string memory encryptedKey, uint hashOfData, 
-                                    uint hashOfRequest, uint timelimit) public {
->>>>>>> 80fd4b5aff23482646edae4f7a7270e70c7f41ec
         require(registeredVerifiers[msg.sender], "You must be a registered verifier to submit requests to update data");
         require(timelimit >= 10, "Verifiers must allow for at least ten seconds to onboard data");
         dataUpdateRequestsStrVar[msg.sender][userPBK][nonce][0] = encryptedRequest;
         dataUpdateRequestsStrVar[msg.sender][userPBK][nonce][1] = encryptedKey;
-<<<<<<< HEAD
         dataUpdateRequestIntVar[msg.sender][userPBK][nonce][0] = hashOfData0;
         dataUpdateRequestIntVar[msg.sender][userPBK][nonce][1] = hashOfData1;
         dataUpdateRequestIntVar[msg.sender][userPBK][nonce][2] = hashOfRequest0;
         dataUpdateRequestIntVar[msg.sender][userPBK][nonce][3] = hashOfRequest1;
         dataUpdateRequestIntVar[msg.sender][userPBK][nonce][4] = block.timestamp + timelimit;
-=======
-        dataUpdateRequestIntVar[msg.sender][userPBK][nonce][0] = hashOfData;
-        dataUpdateRequestIntVar[msg.sender][userPBK][nonce][1] = hashOfRequest;
-        dataUpdateRequestIntVar[msg.sender][userPBK][nonce][2] = block.timestamp + timelimit;
->>>>>>> 80fd4b5aff23482646edae4f7a7270e70c7f41ec
     }
 
     //verifiers place their requests for users to prove ownership of data through this function
     function placeDataProofRequest(address userPBK, uint nonce, string memory encryptedRequest, 
-<<<<<<< HEAD
                                     uint transactionHash0, uint transactionHash1) public {
         require(registeredVerifiers[msg.sender], "You must be a registered verifier to submit requests to prove ownership of data");
         dataProofRequestsStrVar[msg.sender][userPBK][nonce] = encryptedRequest;
@@ -138,49 +117,6 @@ contract Vera {
                     [5]: oB, [6]: cA, [7]: cB, [8]: cC, [9]: cD,
                     [10]: h_ipfs_dA, [11]: h_ipfs_dB
 
-=======
-                                    uint transactionHash) public {
-        require(registeredVerifiers[msg.sender], "You must be a registered verifier to submit requests to prove ownership of data");
-        dataProofRequestsStrVar[msg.sender][userPBK][nonce] = encryptedRequest;
-        dataProofRequestsIntVar[msg.sender][userPBK][nonce] = transactionHash;
-    } 
-
-/*
-on-boarding function implemented as pseudocode:
-
-function(
-     private field u,
-    private field d', private field up, 
-    private field ar, private field v,
-    public field o, public field a,
-    public field c, public field h_key,
-    public field h_ru, public field h_da,
-    public field h_dp, public field h_ipfs_d) {
-        prove that:
-            1. h_key == hash(u)
-            2. h_ru == hash(d' ++ up() ++ ar ++ v)
-            3. o == hash(v ++ u)
-            4. a == encrypt_AES(d', u)
-            5. h_da == hash(d' ++ a ++ u)
-            6. h_dp == hash(d')
-            7. h_ipfs_d == hash(a ++ o ++ c)
-
-    AES: conditions 1, 4, 6
-    AES inputs: [0]: aA, [1]: aB, [2]: aC, [3]: aD,
-                [4]: h_keyA, [5]: h_keyB, [6]: h_dpA, [7]: h_dpB
-
-    Hashes: conditions 1, 2, 3, 5, 6
-    Hashes inputs: [0]: aA,[1]: aB,[2]: aC,[3]: aD, [4]: oA, [5]: oB,
-                   [6]: cA,[7]: cB,[8]: cC,[9]: cD, [10]: h_keyA,
-                   [11]: h_keyB, [12]: h_ruA, [13]: h_ruB, [14]: h_daA,
-                   [15]: h_daB,
-    
-    IPFS: condition 7
-    IPFS inputs: [0]: aA, [1]: aB, [2]: aC, [3]: aD, [4]: oA,
-                 [5]: oB, [6]: cA, [7]: cB, [8]: cC, [9]: cD,
-                 [10]: h_ipfs_dA, [11]: h_ipfs_dB
-}
->>>>>>> 80fd4b5aff23482646edae4f7a7270e70c7f41ec
 */
 
     function onboardDataSmartContract(
@@ -197,11 +133,8 @@ function(
             d. Assert that on-chain hash == h_dp computed off-chain provided to smart
             contract by verifier
         */
-<<<<<<< HEAD
         require(dataUpdateRequestIntVar[PBKVerifier][msg.sender][nonce][2] < block.timestamp,
                 "Onboarding request rejected: time limit exceeded");
-=======
->>>>>>> 80fd4b5aff23482646edae4f7a7270e70c7f41ec
         require(inputAES[0] == inputHashes[0] && inputAES[1] == inputHashes[1] &&
                 inputAES[2] == inputHashes[2] && inputAES[3] == inputHashes[3] &&
                 inputAES[4] == inputHashes[10] && inputAES[5] == inputHashes[11],
@@ -223,12 +156,7 @@ function(
                userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][4] = inputHashes[14];
                userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][5] = inputHashes[15];
                return true;
-<<<<<<< HEAD
         }  
-=======
-        } 
-        
->>>>>>> 80fd4b5aff23482646edae4f7a7270e70c7f41ec
         return false;
     }
 
@@ -254,7 +182,6 @@ function(
             userDataIPFS[msg.sender][inputIPFS[4]][inputIPFS[5]][5] = inputIPFS[11];
         }
     }
-<<<<<<< HEAD
 
 /*
 proof of ownerhsip function implemented as pseudocode:
@@ -359,6 +286,4 @@ proof of ownerhsip function implemented as pseudocode:
         return false;
     }
     */
-=======
->>>>>>> 80fd4b5aff23482646edae4f7a7270e70c7f41ec
 }
