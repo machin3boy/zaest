@@ -89,22 +89,26 @@ contract Vera {
     on-boarding function implemented as pseudocode:
 
     function(
-        private field u,
-        private field d', private field up, 
-        private field ar, private field v,
-        public field o, public field a,
-        public field c, public field h_key,
-        public field h_ru, public field h_da,
-        public field h_dp, public field h_ipfs_d) {
-            prove that:
-                1. h_key == hash(u)
-                2. h_ru == hash(d' ++ up() ++ ar ++ v)
-                3. o == hash(v ++ u)
-                4. a == encrypt_AES(d', u)
-                5. h_da == hash(d' ++ a ++ u)
-                6. h_dp == hash(d')
-                7. h_ipfs_d == hash(a ++ o ++ c)
-        }
+
+        private field u, private field d',
+        private field up, private field ar,
+        private field v, public field o,
+        public field a,  public field c,
+        public field h_key,  public field h_ru,
+        public field h_da, public field h_dp,
+        public field h_ipfs_d) {
+
+        prove that:
+
+        1. h_key	== hash(u)
+        2. h_ru	== hash(d' ++ up() ++ar ++ v)
+        3. o		== hash(v ++ u)
+        4. a		== encrypt_AES(d', u)
+        5. h_da	== hash(d' ++ a ++ u)
+        6. h_dp	== hash(d')
+        7. h_ipfs_d == hash(a ++ o ++ c)
+
+    }
 
         AES: conditions 1, 4, 6
         AES inputs: [0]: aA, [1]: aB, [2]: aC, [3]: aD,
@@ -114,7 +118,7 @@ contract Vera {
         Hashes inputs: [0]: aA,[1]: aB,[2]: aC,[3]: aD, [4]: oA, [5]: oB,
                     [6]: cA,[7]: cB,[8]: cC,[9]: cD, [10]: h_keyA,
                     [11]: h_keyB, [12]: h_ruA, [13]: h_ruB, [14]: h_daA,
-                    [15]: h_daB,
+                    [15]: h_daB
         
         IPFS: condition 7
         IPFS inputs: [0]: aA, [1]: aB, [2]: aC, [3]: aD, [4]: oA,
@@ -124,8 +128,8 @@ contract Vera {
 */
 
     function onboardDataSmartContract(address PBKVerifier, uint nonce, OnboardingAES.Verifier.Proof memory proofAES, 
-                                      uint[11] memory inputAES, OnboardingHashes.Verifier.Proof memory proofHashes, 
-                                      uint[21] memory inputHashes) public returns (bool) {
+                                      uint[9] memory inputAES, OnboardingHashes.Verifier.Proof memory proofHashes, 
+                                      uint[17] memory inputHashes) public returns (bool) {
         /*
             a. Assert that on-chain hash == h_key computed off-chain provided to smart
             contract by user when onboarding in User Keychain Mapping for PBK
@@ -163,25 +167,25 @@ contract Vera {
     }
 
     function onboardDataIPFS(address PBKVerifier, uint nonce, OnboardingAES.Verifier.Proof memory proofAES, 
-                             uint[11] memory inputAES, OnboardingHashes.Verifier.Proof memory proofHashes, 
-                             uint[21] memory inputHashes, OnboardingIPFS.Verifier.Proof memory proofIPFS, 
+                             uint[9] memory inputAES, OnboardingHashes.Verifier.Proof memory proofHashes, 
+                             uint[17] memory inputHashes, OnboardingIPFS.Verifier.Proof memory proofIPFS, 
                              uint[13] memory inputIPFS) public {
 
-    require(inputIPFS[0] == inputHashes[0] && inputIPFS[1] == inputHashes[1] &&
-    inputIPFS[2] == inputHashes[2] && inputIPFS[3] == inputHashes[3] &&
-    inputIPFS[4] == inputHashes[4] && inputIPFS[5] == inputIPFS[5] &&
-    inputIPFS[6] == inputHashes[6] && inputIPFS[7] == inputIPFS[7] &&
-    inputIPFS[8] == inputHashes[8] && inputIPFS[9] == inputIPFS[9],
-    "Proof rejected: diverging parameters submitted to different components");
-    if(onboardIPFS.verifyTx(proofIPFS, inputIPFS) && 
-        onboardDataSmartContract(PBKVerifier, nonce, proofAES, inputAES, proofHashes, inputHashes)){
-            userDataIPFS[msg.sender][inputIPFS[4]][inputIPFS[5]][0] = inputIPFS[6];
-            userDataIPFS[msg.sender][inputIPFS[4]][inputIPFS[5]][1] = inputIPFS[7];
-            userDataIPFS[msg.sender][inputIPFS[4]][inputIPFS[5]][2] = inputIPFS[8];
-            userDataIPFS[msg.sender][inputIPFS[4]][inputIPFS[5]][3] = inputIPFS[9];
-            userDataIPFS[msg.sender][inputIPFS[4]][inputIPFS[5]][4] = inputIPFS[10];
-            userDataIPFS[msg.sender][inputIPFS[4]][inputIPFS[5]][5] = inputIPFS[11];
-        }
+        require(inputIPFS[0] == inputHashes[0] && inputIPFS[1] == inputHashes[1] &&
+        inputIPFS[2] == inputHashes[2] && inputIPFS[3] == inputHashes[3] &&
+        inputIPFS[4] == inputHashes[4] && inputIPFS[5] == inputIPFS[5] &&
+        inputIPFS[6] == inputHashes[6] && inputIPFS[7] == inputIPFS[7] &&
+        inputIPFS[8] == inputHashes[8] && inputIPFS[9] == inputIPFS[9],
+        "Proof rejected: diverging parameters submitted to different components");
+        if(onboardIPFS.verifyTx(proofIPFS, inputIPFS) && 
+            onboardDataSmartContract(PBKVerifier, nonce, proofAES, inputAES, proofHashes, inputHashes)){
+                userDataIPFS[msg.sender][inputIPFS[4]][inputIPFS[5]][0] = inputIPFS[6];
+                userDataIPFS[msg.sender][inputIPFS[4]][inputIPFS[5]][1] = inputIPFS[7];
+                userDataIPFS[msg.sender][inputIPFS[4]][inputIPFS[5]][2] = inputIPFS[8];
+                userDataIPFS[msg.sender][inputIPFS[4]][inputIPFS[5]][3] = inputIPFS[9];
+                userDataIPFS[msg.sender][inputIPFS[4]][inputIPFS[5]][4] = inputIPFS[10];
+                userDataIPFS[msg.sender][inputIPFS[4]][inputIPFS[5]][5] = inputIPFS[11];
+            }
     }
 
 /*
@@ -219,7 +223,7 @@ proof of ownerhsip function implemented as pseudocode:
 */
 
     function proveUserDataSmartContract(address PBKVerifier, uint nonce, OwnershipHashes.Verifier.Proof memory proofHashes, 
-                                        uint[18] memory inputHashes, string memory encryptedResponse, 
+                                        uint[16] memory inputHashes, string memory encryptedResponse, 
                                         string memory encryptedEphemeralKey) public returns (bool) {
 
         /*
@@ -252,7 +256,7 @@ proof of ownerhsip function implemented as pseudocode:
     }
 
     function proveUserDataIPFS(address PBKVerifier, uint nonce, OwnershipHashes.Verifier.Proof memory proofHashes, 
-                               uint[18] memory inputHashes, string memory encryptedResponse, 
+                               uint[16] memory inputHashes, string memory encryptedResponse, 
                                string memory encryptedEphemeralKey, OwnershipIPFS.Verifier.Proof memory proofIPFS, 
                                uint[11] memory inputIPFS)public {
                                       
