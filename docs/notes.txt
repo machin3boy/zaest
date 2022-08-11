@@ -8,10 +8,8 @@ ALT_BN128 curve maximum supported prime p:
 ==================================================
 
 
-variable & hash lengths:
+variable & hash lengths (after SHA-256 padding):
 
-
-PBK     = 40  bytes cut down to 32 bytes = 256 bits
 u       = 16  bytes = 128 bits           = 128 bits 
 d'      = 64  bytes = 512 bits           = 512 bits
 up      = 16  bytes = 128 bits           = 128 bits 
@@ -23,7 +21,7 @@ n       = 16  bytes = 128 bits           = 128 bits
 c       = 60  bytes = 480 bits           = 512 bits 
 e_rs    = 64  bytes = 512 bits           = 512 bits 
 
-h_key       ->      PBK ++ u        -> 256 + 128                            -> 1024
+h_key       ->         u            -> 256                                  -> 1024
 h_ru        ->   d'++up++ar++v      -> 512 + 128 + 128 + 256                -> 1536
 o           ->      v  ++  u        -> 256 + 128                            -> 1024 
 h_da        ->    d' ++ a ++ u      -> 1024+128                             -> 2048
@@ -51,9 +49,6 @@ sample data and encoding as big integers under ALT_BN128 curve limit:
 
 
 ** left: string, right: big integer **
-
-PBK_A:          8e01F03f2C8f5fEB    74962167206230466804943646475036280130        
-PBK_B:          f0CB9e2407e4EE63    135831849987536245514349408303964304947
 
 u:              veratestkey12345    157375645401181578633963562667877807157
 
@@ -95,8 +90,8 @@ e_rsB:          029d04fa865c1b0fc542d6b487213ce4    3473747576621183142528139343
 e_rsC:          9888419bb0615eb348d920ce69a74a99    202750138423644451051133897211784940185
 e_rsD:          743af1bef278fe4eeecb30b53f7a8f48    154496503917952263434351550968427614024
 
-h_keyA:         9d74a103d17d5faefd439aeab7692f85    209294367544286442145450404226292854661
-h_keyB:         c9d271da34624f3249eed9be03af4351    268267518693297114239689087217075962705
+h_keyA:         eab38b88157643f2d9c4250d95528b5f    311971602187955217258457550870149237599
+h_keyB:         d07faa90b5d7d5c5b13663cf6404099e    277142304299062162850571466077972466078
 
 h_txA:          5198b94f5df047ddee2cb5d13ccb7fea    108460455314949581182661726074439434218
 h_txB:          5d5a772ca587b60efba0d321089a35d8    124087927469276387196289039938700850648
@@ -138,7 +133,7 @@ hexadecimals should be padded with leading 0s if necessary
 ownership_hashes_test.zok:
 
     input fields:
-    PBK, u, d, v, a, o, n, c, e_rs
+    u, d, v, a, o, n, c, e_rs
 
     output fields:
     h_key, h_tx, o, h_da, h_dn, h_ipfs_p
@@ -150,7 +145,7 @@ ownership_hashes_test.zok:
 onboarding_hashes_test.zok:
 
     input fields:
-    PBK, u, dP, a, up, v, ar, o, c
+    u, dP, a, up, v, ar, o, c
 
     output fields:
     h_key, h_ru, o, h_da, h_dp, h_ipfs_d

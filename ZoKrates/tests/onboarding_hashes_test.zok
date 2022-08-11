@@ -1,33 +1,11 @@
-import "./field_to_u8_16" as field_to_u8_16;
+import "../field_to_u8_16" as field_to_u8_16;
 import "utils/pack/u32/unpack128" as unpack128;
 import "hashes/sha256/sha256Padded" as sha256;
 import "utils/pack/u32/pack128" as pack128;
 
-/*
-function implemented:
+def main(private field u, private field dPrimeA, private field dPrimeB, private field dPrimeC, private field dPrimeD, field aA, field aB, field aC, field aD, field up, field vA, field vB, field ar, field oA, field oB, field cA, field cB, field cC, field cD) -> field[12] {
 
-function(
-    public field PBK, private field u,
-    private field d', private field up,
-    private field ar, private field v,
-    public field o, public field a,
-    public field c, public field h_key,
-    public field h_ru, public field h_da,
-    public field h_dp, public field h_ipfs_d) {
-        prove that:
-            1. h_key == hash(PBK++u)
-            2. h_ru == hash(d' ++ up() ++ ar ++ v)
-            3. o == hash(v ++ u)
-            4. a == encrypt_AES(d', u)
-            5. h_da == hash(d' ++ a ++ u)
-            6. h_dp == hash(d')
-            7. h_ipfs_d == hash(a ++ o ++ c)
-}
-*/
-
-def main(field PBK_A, field PBK_B, private field u, private field dPrimeA, private field dPrimeB, private field dPrimeC, private field dPrimeD, field aA, field aB, field aC, field aD, field up, field vA, field vB, field ar, field oA, field oB, field cA, field cB, field cC, field cD) -> field[12] {
-
-    u32[8] h_key               = sha256([...field_to_u8_16(PBK_A), ...field_to_u8_16(PBK_B), ...field_to_u8_16(u)]);
+    u32[8] h_key               = sha256(field_to_u8_16(u));
     field[2] h_key_fields      = [pack128(h_key[0..4]), pack128(h_key[4..8])];
 
     u32[8] h_ru                = sha256([...field_to_u8_16(dPrimeA), ...field_to_u8_16(dPrimeB), ...field_to_u8_16(dPrimeC), ...field_to_u8_16(dPrimeD), ...field_to_u8_16(up), ...field_to_u8_16(ar), ...field_to_u8_16(vA), ...field_to_u8_16(vB)]);

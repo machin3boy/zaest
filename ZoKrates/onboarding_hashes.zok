@@ -6,27 +6,31 @@ import "hashes/sha256/sha256Padded" as sha256;
 function implemented:
 
 function(
-    public field PBK, private field u,
-    private field d', private field up,
-    private field ar, private field v,
-    public field o, public field a,
-    public field c, public field h_key,
-    public field h_ru, public field h_da,
-    public field h_dp, public field h_ipfs_d) {
-        prove that:
-            1. h_key == hash(PBK++u)
-            2. h_ru == hash(d' ++ up() ++ ar ++ v)
-            3. o == hash(v ++ u)
-            4. a == encrypt_AES(d', u)
-            5. h_da == hash(d' ++ a ++ u)
-            6. h_dp == hash(d')
-            7. h_ipfs_d == hash(a ++ o ++ c)
+
+    private field u, private field d',
+    private field up, private field ar,
+    private field v, public field o,
+    public field a,  public field c,
+    public field h_key,  public field h_ru,
+    public field h_da, public field h_dp,
+    public field h_ipfs_d) {
+
+    prove that:
+
+    1. h_key	== hash(u)
+    2. h_ru	    == hash(d' ++ up() ++ar++v)
+    3. o		== hash(v ++ u)
+    4. a		== encrypt_AES(d', u)
+    5. h_da	    == hash(d' ++ a ++ u)
+    6. h_dp	    == hash(d')
+    7. h_ipfs_d == hash(a ++ o ++ c)
+
 }
 */
 
-def main(field PBK_A, field PBK_B, private field u, private field dPrimeA, private field dPrimeB, private field dPrimeC, private field dPrimeD, private field up, private field ar, private field vA, private field vB, field aA, field aB, field aC, field aD, field oA, field oB, field cA, field cB, field cC, field cD, field h_keyA, field h_keyB, field h_ruA, field h_ruB, field h_daA, field h_daB, field h_ipfs_dA, field h_ipfs_dB) -> bool {  
+def main(private field u, private field dPrimeA, private field dPrimeB, private field dPrimeC, private field dPrimeD, private field up, private field ar, private field vA, private field vB, field aA, field aB, field aC, field aD, field oA, field oB, field cA, field cB, field cC, field cD, field h_keyA, field h_keyB, field h_ruA, field h_ruB, field h_daA, field h_daB, field h_ipfs_dA, field h_ipfs_dB) -> bool {  
 
-    bool condition1         = sha256([...field_to_u8_16(PBK_A), ...field_to_u8_16(PBK_B), ...field_to_u8_16(u)]) == [...unpack128(h_keyA), ...unpack128(h_keyB)];
+    bool condition1         = sha256(field_to_u8_16(u)) == [...unpack128(h_keyA), ...unpack128(h_keyB)];
     bool condition2         = sha256([...field_to_u8_16(dPrimeA), ...field_to_u8_16(dPrimeB), ...field_to_u8_16(dPrimeC), ...field_to_u8_16(dPrimeD), ...field_to_u8_16(up), ...field_to_u8_16(ar), ...field_to_u8_16(vA), ...field_to_u8_16(vB)]) == [...unpack128(h_ruA), ...unpack128(h_ruB)];
     bool condition3         = sha256([...field_to_u8_16(vA), ...field_to_u8_16(vB), ...field_to_u8_16(u)]) == [...unpack128(oA), ...unpack128(oB)];
     bool condition5         = sha256([...field_to_u8_16(dPrimeA), ...field_to_u8_16(dPrimeB), ...field_to_u8_16(dPrimeC), ...field_to_u8_16(dPrimeD), ...field_to_u8_16(aA), ...field_to_u8_16(aB), ...field_to_u8_16(aC), ...field_to_u8_16(aD), ...field_to_u8_16(u)]) == [...unpack128(h_daA), ...unpack128(h_daB)];

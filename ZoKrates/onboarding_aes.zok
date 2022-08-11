@@ -17,27 +17,33 @@ def verify_aes(field inputA, field inputB, field inputC, field inputD, field cip
 function implemented:
 
 function(
-    public field PBK, private field u,
-    private field d', private field up,
-    private field ar, private field v,
-    public field o, public field a,
-    public field c, public field h_key,
-    public field h_ru, public field h_da,
-    public field h_dp, public field h_ipfs_d) {
-        prove that:
-            1. h_key == hash(PBK++u)
-            2. h_ru == hash(d' ++ up() ++ ar ++ v)
-            3. o == hash(v ++ u)
-            4. a == encrypt_AES(d', u)
-            5. h_da == hash(d' ++ a ++ u)
-            6. h_dp == hash(d')
-            7. h_ipfs_d == hash(a ++ o ++ c)
+
+    private field u, private field d',
+    private field up, private field ar,
+    private field v, public field o,
+    public field a,  public field c,
+    public field h_key,  public field h_ru,
+    public field h_da, public field h_dp,
+    public field h_ipfs_d) {
+
+    prove that:
+
+    1. h_key	== hash(u)
+    2. h_ru	    == hash(d' ++ up() ++ar ++ v)
+    3. o		== hash(v ++ u)
+    4. a		== encrypt_AES(d', u)
+    5. h_da	    == hash(d' ++ a ++ u)
+    6. h_dp	    == hash(d')
+    7. h_ipfs_d == hash(a ++ o ++ c)
+
 }
+
+
 */
 
-def main(field PBK_A, field PBK_B, private field u, private field dPrimeA, private field dPrimeB, private field dPrimeC, private field dPrimeD, field aA, field aB, field aC, field aD, field h_keyA, field h_keyB, field h_dpA, field h_dpB) -> bool {
+def main(private field u, private field dPrimeA, private field dPrimeB, private field dPrimeC, private field dPrimeD, field aA, field aB, field aC, field aD, field h_keyA, field h_keyB, field h_dpA, field h_dpB) -> bool {
   
-    bool condition1         = sha256([...field_to_u8_16(PBK_A), ...field_to_u8_16(PBK_B), ...field_to_u8_16(u)]) == [...unpack128(h_keyA), ...unpack128(h_keyB)];
+    bool condition1         = sha256(field_to_u8_16(u)) == [...unpack128(h_keyA), ...unpack128(h_keyB)];
     bool condition4         = verify_aes(dPrimeA, dPrimeB, dPrimeC, dPrimeD, aA, aB, aC, aD, u);
     bool condition6         = sha256([...field_to_u8_16(dPrimeA), ...field_to_u8_16(dPrimeB), ...field_to_u8_16(dPrimeC), ...field_to_u8_16(dPrimeD)]) == [...unpack128(h_dpA), ...unpack128(h_dpB)];
 

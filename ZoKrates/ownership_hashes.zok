@@ -5,27 +5,29 @@ import "hashes/sha256/sha256Padded" as sha256;
 /*
 function implemented:
 
-function( private field u, public field PBK,
-    private field v, public field n,
-    private field d, public field o,
-    public field a, public field e_rs,
-    public field c, public field h_key,
-    public field h_tx, public field h_da,
-    public field h_dn, public field h_ipfs_p){
-    prove that:
-        1. h_key == hash(PBK ++ u)
-        2. h_tx == hash(v ++ n)
-        3. o == hash(v ++ u)
+function(private field u, private field v
+        public field n, private field d,
+		public field o, public field a, 
+		public field e_rs, public field c,
+		public field h_key, public field h_tx,
+		public field h_da, public field h_dn,
+		public field h_ipfs_p){
+
+        prove that:
+
+        1. h_key	== hash(u)
+        2. h_tx	== hash(v ++ n)
+        3. o	== hash(v ++ u)
         4. h_da == hash(d ++ a ++ u)
         5. h_dn == hash(d ++ v ++ n)
-        6. h_ipfs_p == hash(e_rs ++ c)
-}
+        6. h_ipfs_p	== hash(e_rs ++ c)
 
+}
 */
 
-def main(field PBK_A, field PBK_B, private field u, private field dA, private field dB, private field dC, private field dD, private field vA, private field vB, field aA, field aB, field aC, field aD, field oA, field oB, field n, field h_keyA, field h_keyB, field h_txA, field h_txB, field h_daA, field h_daB, field h_dnA, field h_dnB) -> bool {  
+def main(private field u, private field dA, private field dB, private field dC, private field dD, private field vA, private field vB, field aA, field aB, field aC, field aD, field oA, field oB, field n, field h_keyA, field h_keyB, field h_txA, field h_txB, field h_daA, field h_daB, field h_dnA, field h_dnB) -> bool {  
 
-    bool condition1         = sha256([...field_to_u8_16(PBK_A), ...field_to_u8_16(PBK_B), ...field_to_u8_16(u)]) == [...unpack128(h_keyA), ...unpack128(h_keyB)];
+    bool condition1         = sha256(field_to_u8_16(u)) == [...unpack128(h_keyA), ...unpack128(h_keyB)];
     bool condition2         = sha256([...field_to_u8_16(vA), ...field_to_u8_16(vB), ...field_to_u8_16(n)]) == [...unpack128(h_txA), ...unpack128(h_txB)];
     bool condition3         = sha256([...field_to_u8_16(vA), ...field_to_u8_16(vB), ...field_to_u8_16(u)]) == [...unpack128(oA), ...unpack128(oB)];
     bool condition4         = sha256([...field_to_u8_16(dA), ...field_to_u8_16(dB), ...field_to_u8_16(dC), ...field_to_u8_16(dD), ...field_to_u8_16(aA), ...field_to_u8_16(aB), ...field_to_u8_16(aC), ...field_to_u8_16(aD), ...field_to_u8_16(u)]) == [...unpack128(h_daA), ...unpack128(h_daB)];

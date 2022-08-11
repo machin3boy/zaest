@@ -235,7 +235,7 @@ def encrypt_block(u8[16] plaintext, u8[11][4][4] key_matrices) -> u8[16]{
 }
 
 def main(field plaintext, field master_key) -> field{
-    // field to u8[16]
+
     u8[16] plaintext_u8_16 = field_to_u8_16(plaintext);
     u8[16] master_key_u8_16 = field_to_u8_16(master_key);
 

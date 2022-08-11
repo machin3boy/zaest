@@ -5,25 +5,27 @@ import "hashes/sha256/sha256Padded" as sha256;
 /*
 function implemented:
 
-function( private field u, public field PBK,
-    private field v, public field n,
-    private field d, public field o,
-    public field a, public field e_rs,
-    public field c, public field h_key,
-    public field h_tx, public field h_da,
-    public field h_dn, public field h_ipfs_p){
-    prove that:
-        1. h_key == hash(PBK ++ u)
-        2. h_tx == hash(v ++ n)
-        3. o == hash(v ++ u)
+function( private field u, private field v
+      	public field n, private field d,
+		public field o, public field a, 
+		public field e_rs, public field c,
+		public field h_key, public field h_tx,
+		public field h_da, public field h_dn,
+		public field h_ipfs_p){
+
+        prove that:
+
+        1. h_key	== hash(u)
+        2. h_tx	== hash(v ++ n)
+        3. o	== hash(v ++ u)
         4. h_da == hash(d ++ a ++ u)
         5. h_dn == hash(d ++ v ++ n)
-        6. h_ipfs_p == hash(e_rs ++ c)
+        6. h_ipfs_p	== hash(e_rs ++ c)
 }
-
 */
 
 def main(field e_rsA, field e_rsB, field e_rsC, field e_rsD, field cA, field cB, field cC, field cD, field h_ipfs_pA, field h_ipfs_pB) -> bool {   
+    
     //condition 6
     return sha256([...field_to_u8_16(e_rsA), ...field_to_u8_16(e_rsB), ...field_to_u8_16(e_rsC), ...field_to_u8_16(e_rsD), ...field_to_u8_16(cA), ...field_to_u8_16(cB), ...field_to_u8_16(cC), ...field_to_u8_16(cD)]) == [...unpack128(h_ipfs_pA), ...unpack128(h_ipfs_pB)];
 }
