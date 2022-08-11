@@ -50,7 +50,7 @@ contract Vera {
     mapping (address => mapping (address => mapping (uint => uint[2]))) public userProofSmartContractIntVar;
 
     //encrypted user proofs of ownership submitted to IPFS
-    mapping (address => mapping (address => mapping (uint => string[4]))) public userProofIPFS;
+    mapping (address => mapping (address => mapping (uint => uint[6]))) public userProofIPFS;
 
     //valid registered verifiers
     mapping (address => bool) registeredVerifiers;
@@ -60,7 +60,9 @@ contract Vera {
                                     string memory encryptedKey, uint hashOfData0,
                                     uint hashOfData1, uint hashOfRequest0,
                                     uint hashOfRequest1, uint timelimit) public {
-        require(registeredVerifiers[msg.sender], "You must be a registered verifier to submit requests to update data");
+
+        require(registeredVerifiers[msg.sender], 
+        "You must be a registered verifier to submit requests to update data");
         require(timelimit >= 10, "Verifiers must allow for at least ten seconds to onboard data");
         dataUpdateRequestsStrVar[msg.sender][userPBK][nonce][0] = encryptedRequest;
         dataUpdateRequestsStrVar[msg.sender][userPBK][nonce][1] = encryptedKey;
@@ -74,7 +76,9 @@ contract Vera {
     //verifiers place their requests for users to prove ownership of data through this function
     function placeDataProofRequest(address userPBK, uint nonce, string memory encryptedRequest, 
                                     uint transactionHash0, uint transactionHash1) public {
-        require(registeredVerifiers[msg.sender], "You must be a registered verifier to submit requests to prove ownership of data");
+
+        require(registeredVerifiers[msg.sender], 
+        "You must be a registered verifier to submit requests to prove ownership of data");
         dataProofRequestsStrVar[msg.sender][userPBK][nonce] = encryptedRequest;
         dataProofRequestsIntVar[msg.sender][userPBK][nonce][0] = transactionHash0;
         dataProofRequestsIntVar[msg.sender][userPBK][nonce][1] = transactionHash1;
@@ -119,10 +123,9 @@ contract Vera {
 
 */
 
-    function onboardDataSmartContract(
-        address PBKVerifier, uint nonce, OnboardingAES.Verifier.Proof memory proofAES, 
-        uint[11] memory inputAES, OnboardingHashes.Verifier.Proof memory proofHashes, 
-        uint[21] memory inputHashes) public returns (bool) {
+    function onboardDataSmartContract(address PBKVerifier, uint nonce, OnboardingAES.Verifier.Proof memory proofAES, 
+                                      uint[11] memory inputAES, OnboardingHashes.Verifier.Proof memory proofHashes, 
+                                      uint[21] memory inputHashes) public returns (bool) {
         /*
             a. Assert that on-chain hash == h_key computed off-chain provided to smart
             contract by user when onboarding in User Keychain Mapping for PBK
@@ -134,20 +137,19 @@ contract Vera {
             contract by verifier
         */
         require(dataUpdateRequestIntVar[PBKVerifier][msg.sender][nonce][2] < block.timestamp,
-                "Onboarding request rejected: time limit exceeded");
+        "Onboarding request rejected: time limit exceeded");
         require(inputAES[0] == inputHashes[0] && inputAES[1] == inputHashes[1] &&
-                inputAES[2] == inputHashes[2] && inputAES[3] == inputHashes[3] &&
-                inputAES[4] == inputHashes[10] && inputAES[5] == inputHashes[11],
-                "Proof rejected: diverging parameters submitted to different components");
-        require(userKeychain[msg.sender][0] == inputAES[4] && 
-                userKeychain[msg.sender][1] == inputAES[5],
-                "Invalid private symmetric key provided with proof");
+        inputAES[2] == inputHashes[2] && inputAES[3] == inputHashes[3] &&
+        inputAES[4] == inputHashes[10] && inputAES[5] == inputHashes[11],
+        "Proof rejected: diverging parameters submitted to different components");
+        require(userKeychain[msg.sender][0] == inputAES[4] && userKeychain[msg.sender][1] == inputAES[5],
+        "Invalid private symmetric key provided with proof");
         require(dataUpdateRequestIntVar[PBKVerifier][msg.sender][nonce][0] == inputAES[6] &&
-                dataUpdateRequestIntVar[PBKVerifier][msg.sender][nonce][1] == inputAES[7],
-                "Invalid hash of cleartext data provided");   
+        dataUpdateRequestIntVar[PBKVerifier][msg.sender][nonce][1] == inputAES[7],
+        "Invalid hash of cleartext data provided");   
         require(dataUpdateRequestIntVar[PBKVerifier][msg.sender][nonce][2] == inputHashes[12] &&
-                dataUpdateRequestIntVar[PBKVerifier][msg.sender][nonce][3] == inputHashes[13],
-                "Invalid hash of request onboarded provided");
+        dataUpdateRequestIntVar[PBKVerifier][msg.sender][nonce][3] == inputHashes[13],
+        "Invalid hash of request onboarded provided");
         if(onboardAES.verifyTx(proofAES, inputAES) && onboardHashes.verifyTx(proofHashes, inputHashes)){
                userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][0] = inputHashes[0];
                userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][1] = inputHashes[1];
@@ -160,20 +162,19 @@ contract Vera {
         return false;
     }
 
-    function onboardDataIPFS(
-        address PBKVerifier, uint nonce, 
-        OnboardingAES.Verifier.Proof memory proofAES, uint[11] memory inputAES,
-        OnboardingHashes.Verifier.Proof memory proofHashes, uint[21] memory inputHashes,
-        OnboardingIPFS.Verifier.Proof memory proofIPFS, uint[13] memory inputIPFS) public {
+    function onboardDataIPFS(address PBKVerifier, uint nonce, OnboardingAES.Verifier.Proof memory proofAES, 
+                             uint[11] memory inputAES, OnboardingHashes.Verifier.Proof memory proofHashes, 
+                             uint[21] memory inputHashes, OnboardingIPFS.Verifier.Proof memory proofIPFS, 
+                             uint[13] memory inputIPFS) public {
+
     require(inputIPFS[0] == inputHashes[0] && inputIPFS[1] == inputHashes[1] &&
-        inputIPFS[2] == inputHashes[2] && inputIPFS[3] == inputHashes[3] &&
-        inputIPFS[4] == inputHashes[4] && inputIPFS[5] == inputIPFS[5] &&
-        inputIPFS[6] == inputHashes[6] && inputIPFS[7] == inputIPFS[7] &&
-        inputIPFS[8] == inputHashes[8] && inputIPFS[9] == inputIPFS[9],
-        "Proof rejected: diverging parameters submitted to different components");
-    if(onboardIPFS.verifyTx(proofIPFS, inputIPFS) &&
-        onboardDataSmartContract(PBKVerifier, nonce, proofAES, inputAES, 
-        proofHashes, inputHashes)){
+    inputIPFS[2] == inputHashes[2] && inputIPFS[3] == inputHashes[3] &&
+    inputIPFS[4] == inputHashes[4] && inputIPFS[5] == inputIPFS[5] &&
+    inputIPFS[6] == inputHashes[6] && inputIPFS[7] == inputIPFS[7] &&
+    inputIPFS[8] == inputHashes[8] && inputIPFS[9] == inputIPFS[9],
+    "Proof rejected: diverging parameters submitted to different components");
+    if(onboardIPFS.verifyTx(proofIPFS, inputIPFS) && 
+        onboardDataSmartContract(PBKVerifier, nonce, proofAES, inputAES, proofHashes, inputHashes)){
             userDataIPFS[msg.sender][inputIPFS[4]][inputIPFS[5]][0] = inputIPFS[6];
             userDataIPFS[msg.sender][inputIPFS[4]][inputIPFS[5]][1] = inputIPFS[7];
             userDataIPFS[msg.sender][inputIPFS[4]][inputIPFS[5]][2] = inputIPFS[8];
@@ -213,14 +214,14 @@ proof of ownerhsip function implemented as pseudocode:
 
     IPFS: condition 6
     IPFS inputs: [0]: e_rsA, [1]: e_rsB, [2]: e_rsC, [3]: e_rsD, [4]: cA, 
-                 [5]: cB, [6]: cC, [7]: cD, [8]: cD, [9]: h_ipfs_pA, 
-                 [10]: h_ipfs_pB
+                 [5]: cB, [6]: cC, [7]: cD, [8]: h_ipfs_pA, 
+                 [9]: h_ipfs_pB
 */
 
-    function proveUserDataSmartContract(
-        address PBKVerifier, uint nonce, OwnershipHashes.Verifier.Proof memory proofHashes, 
-        uint[18] memory inputHashes, string memory encryptedResponse, string memory encryptedEphemeralKey) 
-        public returns (bool) {
+    function proveUserDataSmartContract(address PBKVerifier, uint nonce, OwnershipHashes.Verifier.Proof memory proofHashes, 
+                                        uint[18] memory inputHashes, string memory encryptedResponse, 
+                                        string memory encryptedEphemeralKey) public returns (bool) {
+
         /*
             a. Assert that on-chain hash == h_key computed off-chain provided to smart
             contract by user when onboarding in User Keychain Mapping for PBK
@@ -228,62 +229,41 @@ proof of ownerhsip function implemented as pseudocode:
             contract by public service verifier
             c. Assert that User Data Mapping at (PBK_user) => o => (a, h_da)
         */
-        require(userKeychain[msg.sender][0] == inputHashes[7] && 
-                userKeychain[msg.sender][1] == inputHashes[8],
-                "Invalid private symmetric key provided with proof");
+        require(userKeychain[msg.sender][0] == inputHashes[7] && userKeychain[msg.sender][1] == inputHashes[8],
+        "Invalid private symmetric key provided with proof");
         require(dataProofRequestsIntVar[PBKVerifier][msg.sender][nonce][0] == inputHashes[9] &&
-                dataProofRequestsIntVar[PBKVerifier][msg.sender][nonce][0] == inputHashes[10],
-                "Transaction hash for user proof provided mismatched request");
+        dataProofRequestsIntVar[PBKVerifier][msg.sender][nonce][0] == inputHashes[10],
+        "Transaction hash for user proof provided mismatched request");
         require(userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][0] == inputHashes[0] &&
-                userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][1] == inputHashes[1] &&
-                userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][2] == inputHashes[2] &&
-                userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][3] == inputHashes[3] &&
-                userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][4] == inputHashes[11] &&
-                userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][5] == inputHashes[12],
-                "Mapping at provided obfuscated field does not match provided encrypted data");
+        userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][1] == inputHashes[1] &&
+        userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][2] == inputHashes[2] &&
+        userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][3] == inputHashes[3] &&
+        userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][4] == inputHashes[11] &&
+        userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][5] == inputHashes[12],
+        "Mapping at provided obfuscated field does not match provided encrypted data");
         if(ownershipHashes.verifyTx(proofHashes, inputHashes)){
-                userProofSmartContractStrVar[PBKVerifier][msg.sender][nonce][0] = encryptedResponse;
-                userProofSmartContractStrVar[PBKVerifier][msg.sender][nonce][1] = encryptedEphemeralKey;
-                userProofSmartContractIntVar[PBKVerifier][msg.sender][nonce][0] = inputHashes[13];
-                userProofSmartContractIntVar[PBKVerifier][msg.sender][nonce][0] = inputHashes[14];
-                return true;
+            userProofSmartContractStrVar[PBKVerifier][msg.sender][nonce][0] = encryptedResponse;
+            userProofSmartContractStrVar[PBKVerifier][msg.sender][nonce][1] = encryptedEphemeralKey;
+            userProofSmartContractIntVar[PBKVerifier][msg.sender][nonce][0] = inputHashes[13];
+            userProofSmartContractIntVar[PBKVerifier][msg.sender][nonce][0] = inputHashes[14];
+            return true;
         } 
         return false;
     }
 
-    /*
-    function proveUserDataIPFS(
-        address PBKVerifier, uint nonce, OwnershipHashes.Verifier.Proof memory proofHashes, 
-        uint[18] memory inputHashes, string encryptedResponse, string encryptedEphemeralKey) 
-        public returns (bool) {
-        
-            a. Assert that on-chain hash == h_key computed off-chain provided to smart
-            contract by user when onboarding in User Keychain Mapping for PBK
-            b. Assert that on-chain hash == h_tx computed off-chain provided to smart
-            contract by public service verifier
-            c. Assert that User Data Mapping at (PBK_user) => o => (a, h_da)
-        
-        require(userKeychain[msg.sender][0] == inputHashes[7] && 
-                userKeychain[msg.sender][1] == inputHashes[8],
-                "Invalid private symmetric key provided with proof");
-        require(dataProofRequestsIntVar[PBKVerifier][msg.sender][nonce][0] == inputHashes[9] &&
-                dataProofRequestsIntVar[PBKVerifier][msg.sender][nonce][0] == inputHashes[10],
-                "Transaction hash for user proof provided mismatched request");
-        require(userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][0] == inputHashes[0],
-                userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][1] == inputHashes[1],
-                userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][2] == inputHashes[2],
-                userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][3] == inputHashes[3],
-                userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][4] == inputHashes[11],
-                userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][5] == inputHashes[12],
-                "Mapping at provided obfuscated field does not match provided encrypted data");
-        if(ownershipHashes.verifyTx(proofHashes, inputHashes)){
-                userProofSmartContractStrVar[PBKVerifier][msg.sender][nonce][0] = encryptedResponse;
-                userProofSmartContractStrVar[PBKVerifier][msg.sender][nonce][1] = encryptedEphemeralKey;
-                userProofSmartContractIntVar[PBKVerifier][msg.sender][nonce][0] = inputHashes[13];
-                userProofSmartContractIntVar[PBKVerifier][msg.sender][nonce][0] = inputHashes[14];
-                return true;
-        } 
-        return false;
+    function proveUserDataIPFS(address PBKVerifier, uint nonce, OwnershipHashes.Verifier.Proof memory proofHashes, 
+                               uint[18] memory inputHashes, string memory encryptedResponse, 
+                               string memory encryptedEphemeralKey, OwnershipIPFS.Verifier.Proof memory proofIPFS, 
+                               uint[11] memory inputIPFS)public {
+                                      
+        if(proveUserDataSmartContract(PBKVerifier, nonce, proofHashes, inputHashes, 
+        encryptedResponse, encryptedEphemeralKey) &&  ownershipIPFS.verifyTx(proofIPFS, inputIPFS)){
+            userProofIPFS[PBKVerifier][msg.sender][nonce][0] = inputIPFS[4];
+            userProofIPFS[PBKVerifier][msg.sender][nonce][1] = inputIPFS[5];
+            userProofIPFS[PBKVerifier][msg.sender][nonce][2] = inputIPFS[6];
+            userProofIPFS[PBKVerifier][msg.sender][nonce][3] = inputIPFS[7];
+            userProofIPFS[PBKVerifier][msg.sender][nonce][4] = inputIPFS[8];
+            userProofIPFS[PBKVerifier][msg.sender][nonce][5] = inputIPFS[9];
+        }                    
     }
-    */
 }
