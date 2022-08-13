@@ -20,6 +20,7 @@ import * as OwnershipIPFS from "./ownership_ipfs.sol";
 
 contract Vera {
 
+    //zk-SNARK verifiers
     OnboardingAES.Verifier public onboardAES = new OnboardingAES.Verifier();
     OnboardingHashes.Verifier public onboardHashes = new OnboardingHashes.Verifier();
     OnboardingIPFS.Verifier public onboardIPFS = new OnboardingIPFS.Verifier();
@@ -28,6 +29,7 @@ contract Vera {
 
     //SHA256 of user-registered symmetric keys
     mapping (address => uint[2]) public userKeychain;
+
     //encrypted user data housed in the smart contract
     mapping (address => mapping (uint => mapping (uint => uint[6]))) userDataSmartContract;
 
@@ -52,17 +54,60 @@ contract Vera {
     //encrypted user proofs of ownership submitted to IPFS
     mapping (address => mapping (address => mapping (uint => uint[6]))) public userProofIPFS;
 
-    //valid registered verifiers
+    //approved list of verifier
     mapping (address => bool) registeredVerifiers;
+
+    //the permissions verifiers have for specific actions 
+    mapping (address => mapping (string => bool)) private verifierPermissions;
+    
+    //Vera developers' access for privileged operations such as onboarding verifiers 
+    mapping (address => bool) private veraDeveloperAccess;
+
+    //checking access for privileged functions only Vera developers are allowed to access
+    modifier onlyVera {
+        require(veraDeveloperAccess[msg.sender]);
+        _;
+    }
+
+    //this is a Solidity modifier to prevent standard non-verifier users form being able to call privileged functions
+    modifier onlyVerifiers {
+        require(registeredVerifiers[msg.sender] == true, 
+        "You must be a registered verifier to submit requests to update data");
+        _;
+    }
+
+    //this function serves as a safeguard for Vera developers/government officials/etc. to be able to change any verifiers' 
+    //permissions for a specific field or set of fields
+    function changeVerifierPermissions(address verifier, string memory permission, bool newVal) public onlyVera{
+        registeredVerifiers[verifier] = true;
+        verifierPermissions[verifier][permission] = newVal;
+    }
+
+    function revokeVerifier(address verifier) public onlyVera{
+        registeredVerifiers[verifier] = false;
+    }
+
+    //switching the privilege level for any given Vera developer - for instance to remove a retired Vera dev's access
+    function switchDeveloperAccess(address a, bool b) public onlyVera{
+        veraDeveloperAccess[a] = b;
+    }
+
+    //registering the first Vera developer with the contract constructor as the first privileged user 
+    constructor(){
+        veraDeveloperAccess[msg.sender] = true;
+    }
+
+    //onboarding secondary symmetric keys for users
+    function onboardUserkeys(uint h_keyA, uint h_keyB) public{
+        userKeychain[msg.sender][0] = h_keyA;
+        userKeychain[msg.sender][1] = h_keyB;
+    }
 
     //verifiers place their requests for users to update data through this function
     function placeDataUpdateRequest(address userPBK, uint nonce, string memory encryptedRequest, 
                                     string memory encryptedKey, uint hashOfData0,
                                     uint hashOfData1, uint hashOfRequest0,
-                                    uint hashOfRequest1, uint timelimit) public {
-
-        require(registeredVerifiers[msg.sender], 
-        "You must be a registered verifier to submit requests to update data");
+                                    uint hashOfRequest1, uint timelimit) public onlyVerifiers{
         require(timelimit >= 10, "Verifiers must allow for at least ten seconds to onboard data");
         dataUpdateRequestsStrVar[msg.sender][userPBK][nonce][0] = encryptedRequest;
         dataUpdateRequestsStrVar[msg.sender][userPBK][nonce][1] = encryptedKey;
@@ -75,61 +120,59 @@ contract Vera {
 
     //verifiers place their requests for users to prove ownership of data through this function
     function placeDataProofRequest(address userPBK, uint nonce, string memory encryptedRequest, 
-                                    uint transactionHash0, uint transactionHash1) public {
-
-        require(registeredVerifiers[msg.sender], 
-        "You must be a registered verifier to submit requests to prove ownership of data");
+                                    uint transactionHash0, uint transactionHash1) public onlyVerifiers{
         dataProofRequestsStrVar[msg.sender][userPBK][nonce] = encryptedRequest;
         dataProofRequestsIntVar[msg.sender][userPBK][nonce][0] = transactionHash0;
         dataProofRequestsIntVar[msg.sender][userPBK][nonce][1] = transactionHash1;
     } 
 
-/*
+    /*
 
-    on-boarding function implemented as pseudocode:
+        on-boarding function implemented as pseudocode:
 
-    function(
+        function(
 
-        private field u, private field d',
-        private field up, private field ar,
-        private field v, public field o,
-        public field a,  public field c,
-        public field h_key,  public field h_ru,
-        public field h_da, public field h_dp,
-        public field h_ipfs_d) {
+            private field u, private field d',
+            private field up, private field ar,
+            private field v, public field o,
+            public field a,  public field c,
+            public field h_key,  public field h_ru,
+            public field h_da, public field h_dp,
+            public field h_ipfs_d) {
 
-        prove that:
+            prove that:
 
-        1. h_key	== hash(u)
-        2. h_ru	== hash(d' ++ up() ++ar ++ v)
-        3. o		== hash(v ++ u)
-        4. a		== encrypt_AES(d', u)
-        5. h_da	== hash(d' ++ a ++ u)
-        6. h_dp	== hash(d')
-        7. h_ipfs_d == hash(a ++ o ++ c)
+            1. h_key	== hash(u)
+            2. h_ru	== hash(d' ++ up() ++ar ++ v)
+            3. o		== hash(v ++ u)
+            4. a		== encrypt_AES(d', u)
+            5. h_da	== hash(d' ++ a ++ u)
+            6. h_dp	== hash(d')
+            7. h_ipfs_d == hash(a ++ o ++ c)
 
-    }
+        }
 
-        AES: conditions 1, 4, 6
-        AES inputs: [0]: aA, [1]: aB, [2]: aC, [3]: aD,
-                    [4]: h_keyA, [5]: h_keyB, [6]: h_dpA, [7]: h_dpB
+            AES: conditions 1, 4, 6
+            AES inputs: [0]: aA, [1]: aB, [2]: aC, [3]: aD,
+                        [4]: h_keyA, [5]: h_keyB, [6]: h_dpA, [7]: h_dpB
 
-        Hashes: conditions 1, 2, 3, 5, 6
-        Hashes inputs: [0]: aA,[1]: aB,[2]: aC,[3]: aD, [4]: oA, [5]: oB,
-                    [6]: cA,[7]: cB,[8]: cC,[9]: cD, [10]: h_keyA,
-                    [11]: h_keyB, [12]: h_ruA, [13]: h_ruB, [14]: h_daA,
-                    [15]: h_daB
-        
-        IPFS: condition 7
-        IPFS inputs: [0]: aA, [1]: aB, [2]: aC, [3]: aD, [4]: oA,
-                    [5]: oB, [6]: cA, [7]: cB, [8]: cC, [9]: cD,
-                    [10]: h_ipfs_dA, [11]: h_ipfs_dB
+            Hashes: conditions 1, 2, 3, 5, 6
+            Hashes inputs: [0]: aA,[1]: aB,[2]: aC,[3]: aD, [4]: oA, [5]: oB,
+                        [6]: cA,[7]: cB,[8]: cC,[9]: cD, [10]: h_keyA,
+                        [11]: h_keyB, [12]: h_ruA, [13]: h_ruB, [14]: h_daA,
+                        [15]: h_daB
+            
+            IPFS: condition 7
+            IPFS inputs: [0]: aA, [1]: aB, [2]: aC, [3]: aD, [4]: oA,
+                        [5]: oB, [6]: cA, [7]: cB, [8]: cC, [9]: cD,
+                        [10]: h_ipfs_dA, [11]: h_ipfs_dB
 
-*/
+    */
 
+    //users onboard data into the smart contract through this function
     function onboardDataSmartContract(address PBKVerifier, uint nonce, OnboardingAES.Verifier.Proof memory proofAES, 
                                       uint[9] memory inputAES, OnboardingHashes.Verifier.Proof memory proofHashes, 
-                                      uint[17] memory inputHashes) public returns (bool) {
+                                      uint[17] memory inputHashes) public returns (bool){
         /*
             a. Assert that on-chain hash == h_key computed off-chain provided to smart
             contract by user when onboarding in User Keychain Mapping for PBK
@@ -166,11 +209,11 @@ contract Vera {
         return false;
     }
 
+    //users onboard data into IPFS through this function
     function onboardDataIPFS(address PBKVerifier, uint nonce, OnboardingAES.Verifier.Proof memory proofAES, 
                              uint[9] memory inputAES, OnboardingHashes.Verifier.Proof memory proofHashes, 
                              uint[17] memory inputHashes, OnboardingIPFS.Verifier.Proof memory proofIPFS, 
-                             uint[13] memory inputIPFS) public {
-
+                             uint[13] memory inputIPFS) public{
         require(inputIPFS[0] == inputHashes[0] && inputIPFS[1] == inputHashes[1] &&
         inputIPFS[2] == inputHashes[2] && inputIPFS[3] == inputHashes[3] &&
         inputIPFS[4] == inputHashes[4] && inputIPFS[5] == inputIPFS[5] &&
@@ -188,44 +231,46 @@ contract Vera {
             }
     }
 
-/*
-proof of ownerhsip function implemented as pseudocode:
+    /*
 
-    function( private field u, private field v
-            public field n, private field d,
-            public field o, public field a, 
-            public field e_rs, public field c,
-            public field h_key, public field h_tx,
-            public field h_da, public field h_dn,
-            public field h_ipfs_p){
+    proof of ownership function implemented as pseudocode:
 
-        prove that:
+        function( private field u, private field v
+                public field n, private field d,
+                public field o, public field a, 
+                public field e_rs, public field c,
+                public field h_key, public field h_tx,
+                public field h_da, public field h_dn,
+                public field h_ipfs_p){
 
-        1. h_key	== hash(u)
-        2. h_tx	== hash(v ++ n)
-        3. o	== hash(v ++ u)
-        4. h_da == hash(d ++ a ++ u)
-        5. h_dn == hash(d ++ v ++ n)
-        6. h_ipfs_p	== hash(e_rs ++ c)
+            prove that:
 
-    }
+            1. h_key	== hash(u)
+            2. h_tx	== hash(v ++ n)
+            3. o	== hash(v ++ u)
+            4. h_da == hash(d ++ a ++ u)
+            5. h_dn == hash(d ++ v ++ n)
+            6. h_ipfs_p	== hash(e_rs ++ c)
 
-    Hashes: conditions 1, 2, 3, 5, 5
-    Hashes inputs: [0]: aA, [1]: aB, [2]: aC, [3]: aD, [4]: oA
-                   [5]: oB, [6]: n,  [7]: h_keyA, [8]: h_keyB,
-                   [9]: h_txA, [10]: h_txB, [11]: h_daA,
-                   [12]: h_daB, [13]: h_dnA, [14]: h_dnB
+        }
 
-    IPFS: condition 6
-    IPFS inputs: [0]: e_rsA, [1]: e_rsB, [2]: e_rsC, [3]: e_rsD, [4]: cA, 
-                 [5]: cB, [6]: cC, [7]: cD, [8]: h_ipfs_pA, 
-                 [9]: h_ipfs_pB
-*/
+        Hashes: conditions 1, 2, 3, 5, 5
+        Hashes inputs: [0]: aA, [1]: aB, [2]: aC, [3]: aD, [4]: oA
+                    [5]: oB, [6]: n,  [7]: h_keyA, [8]: h_keyB,
+                    [9]: h_txA, [10]: h_txB, [11]: h_daA,
+                    [12]: h_daB, [13]: h_dnA, [14]: h_dnB
 
+        IPFS: condition 6
+        IPFS inputs: [0]: e_rsA, [1]: e_rsB, [2]: e_rsC, [3]: e_rsD, [4]: cA, 
+                    [5]: cB, [6]: cC, [7]: cD, [8]: h_ipfs_pA, 
+                    [9]: h_ipfs_pB
+
+    */
+
+    //users prove ownership of data housed in smart contract through this function
     function proveUserDataSmartContract(address PBKVerifier, uint nonce, OwnershipHashes.Verifier.Proof memory proofHashes, 
                                         uint[16] memory inputHashes, string memory encryptedResponse, 
-                                        string memory encryptedEphemeralKey) public returns (bool) {
-
+                                        string memory encryptedEphemeralKey) public returns (bool){
         /*
             a. Assert that on-chain hash == h_key computed off-chain provided to smart
             contract by user when onboarding in User Keychain Mapping for PBK
@@ -255,11 +300,11 @@ proof of ownerhsip function implemented as pseudocode:
         return false;
     }
 
+    //users prove ownership of data housed on IPFS through this function
     function proveUserDataIPFS(address PBKVerifier, uint nonce, OwnershipHashes.Verifier.Proof memory proofHashes, 
                                uint[16] memory inputHashes, string memory encryptedResponse, 
                                string memory encryptedEphemeralKey, OwnershipIPFS.Verifier.Proof memory proofIPFS, 
-                               uint[11] memory inputIPFS)public {
-                                      
+                               uint[11] memory inputIPFS) public{                            
         if(proveUserDataSmartContract(PBKVerifier, nonce, proofHashes, inputHashes, 
         encryptedResponse, encryptedEphemeralKey) &&  ownershipIPFS.verifyTx(proofIPFS, inputIPFS)){
             userProofIPFS[PBKVerifier][msg.sender][nonce][0] = inputIPFS[4];
@@ -271,3 +316,4 @@ proof of ownerhsip function implemented as pseudocode:
         }                    
     }
 }
+
