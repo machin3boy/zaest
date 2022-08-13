@@ -87,6 +87,7 @@ contract Zaest {
 
     //this function provides the ability to change any verifiers' permissions for update functionality of a field
     function changeUpdateFunctionPermissions(address verifier, string memory permission, bool newVal) public onlyZaest{
+        registeredVerifiers[verifier] = true;
         updateFunctionPermissions[verifier][permission] = newVal;
     }
 
@@ -196,6 +197,7 @@ contract Zaest {
             d. Assert that on-chain hash == h_dp computed off-chain provided to smart
             contract by verifier
         */
+        require(inputAES[8] == 1 && inputHashes[16] == 1, "Provided data failed integrity checks");
         require(dataUpdateRequestIntVar[PBKVerifier][msg.sender][nonce][2] < block.timestamp,
         "Onboarding request rejected: time limit exceeded");
         require(inputAES[0] == inputHashes[0] && inputAES[1] == inputHashes[1] &&
@@ -227,6 +229,7 @@ contract Zaest {
                              uint[9] memory inputAES, OnboardingHashes.Verifier.Proof memory proofHashes, 
                              uint[17] memory inputHashes, OnboardingIPFS.Verifier.Proof memory proofIPFS, 
                              uint[13] memory inputIPFS) public{
+        require(inputIPFS[12] == 1, "Provided data failed integrity checks");
         require(inputIPFS[0] == inputHashes[0] && inputIPFS[1] == inputHashes[1] &&
         inputIPFS[2] == inputHashes[2] && inputIPFS[3] == inputHashes[3] &&
         inputIPFS[4] == inputHashes[4] && inputIPFS[5] == inputIPFS[5] &&
@@ -291,10 +294,11 @@ contract Zaest {
             contract by public service verifier
             c. Assert that User Data Mapping at (PBK_user) => o => (a, h_da)
         */
+        require(inputHashes[15] == 1, "Provided data failed integrity checks");
         require(userSymmetricKeychain[msg.sender][0] == inputHashes[7] && userSymmetricKeychain[msg.sender][1] == inputHashes[8],
         "Invalid private symmetric key provided with proof");
         require(dataProofRequestsIntVar[PBKVerifier][msg.sender][nonce][0] == inputHashes[9] &&
-        dataProofRequestsIntVar[PBKVerifier][msg.sender][nonce][0] == inputHashes[10],
+        dataProofRequestsIntVar[PBKVerifier][msg.sender][nonce][1] == inputHashes[10],
         "Transaction hash for user proof provided mismatched request");
         require(userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][0] == inputHashes[0] &&
         userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][1] == inputHashes[1] &&
@@ -307,7 +311,7 @@ contract Zaest {
             userProofSmartContractStrVar[PBKVerifier][msg.sender][nonce][0] = encryptedResponse;
             userProofSmartContractStrVar[PBKVerifier][msg.sender][nonce][1] = encryptedEphemeralKey;
             userProofSmartContractIntVar[PBKVerifier][msg.sender][nonce][0] = inputHashes[13];
-            userProofSmartContractIntVar[PBKVerifier][msg.sender][nonce][0] = inputHashes[14];
+            userProofSmartContractIntVar[PBKVerifier][msg.sender][nonce][1] = inputHashes[14];
             return true;
         } 
         return false;
@@ -317,7 +321,8 @@ contract Zaest {
     function proveUserDataIPFS(address PBKVerifier, uint nonce, OwnershipHashes.Verifier.Proof memory proofHashes, 
                                uint[16] memory inputHashes, string memory encryptedResponse, 
                                string memory encryptedEphemeralKey, OwnershipIPFS.Verifier.Proof memory proofIPFS, 
-                               uint[11] memory inputIPFS) public{                            
+                               uint[11] memory inputIPFS) public{  
+        require(inputIPFS[10] == 1, "Provided data failed integrity checks");                                             
         if(proveUserDataSmartContract(PBKVerifier, nonce, proofHashes, inputHashes, 
         encryptedResponse, encryptedEphemeralKey) &&  ownershipIPFS.verifyTx(proofIPFS, inputIPFS)){
             userProofIPFS[PBKVerifier][msg.sender][nonce][0] = inputIPFS[4];
