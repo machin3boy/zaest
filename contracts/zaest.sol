@@ -1,14 +1,11 @@
-/*
-
-{_______ {__      {_       {________  {__ __  {___ {______
+/*______ {__      {_       {________  {__ __  {___ {______
        {__       {_ __     {__      {__    {__     {__    
       {__       {_  {__    {__       {__           {__    
     {__        {__   {__   {______     {__         {__    
    {__        {______ {__  {__            {__      {__    
  {__         {__       {__ {__      {__    {__     {__    
-{___________{__         {__{________  {__ __       {__   
+{___________{__         {__{________  {__ __       {*/   
 
-*/
 pragma solidity ^0.8.0;
 
 import * as OnboardingAES from "./onboarding_aes.sol";
@@ -156,12 +153,12 @@ contract Zaest {
 
             prove that:
 
-            1. h_key	== hash(u)
-            2. h_ru	== hash(d' ++ up() ++ar ++ v)
-            3. o		== hash(v ++ u)
-            4. a		== encrypt_AES(d', u)
-            5. h_da	== hash(d' ++ a ++ u)
-            6. h_dp	== hash(d')
+            1. h_key == hash(u)
+            2. h_ru  == hash(d' ++ up() ++ar ++ v)
+            3. o     == hash(v ++ u)
+            4. a     == encrypt_AES(d', u)
+            5. h_da	 == hash(d' ++ a ++ u)
+            6. h_dp	 == hash(d')
             7. h_ipfs_d == hash(a ++ o ++ c)
 
         }
@@ -261,12 +258,12 @@ contract Zaest {
 
             prove that:
 
-            1. h_key	== hash(u)
-            2. h_tx	== hash(v ++ n)
-            3. o	== hash(v ++ u)
-            4. h_da == hash(d ++ a ++ u)
-            5. h_dn == hash(d ++ v ++ n)
-            6. h_ipfs_p	== hash(e_rs ++ c)
+            1. h_key == hash(u)
+            2. h_tx  == hash(v ++ n)
+            3. o     == hash(v ++ u)
+            4. h_da  == hash(d ++ a ++ u)
+            5. h_dn  == hash(d ++ v ++ n)
+            6. h_ipfs_p == hash(e_rs ++ c)
 
         }
 
