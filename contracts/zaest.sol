@@ -29,8 +29,8 @@ contract Zaest {
     //SHA256 of user-registered symmetric keys
     mapping (address => uint[2]) public userSymmetricKeychain;
 
-    //RSA public keys of users for encryption
-    mapping (address => string) public userAsymmetricKeychain;
+    //RSA public keys of users & verifiers for encryption
+    mapping (address => string) public asymmetricKeychain;
 
     //encrypted user data housed in the smart contract
     mapping (address => mapping (uint => mapping (uint => uint[6]))) userDataSmartContract;
@@ -111,9 +111,9 @@ contract Zaest {
         userSymmetricKeychain[msg.sender][1] = h_keyB;
     }
 
-    //onboarding asymmetric keys for users by storing the RSA public keys
-    function onboardUserAsymmetricKey(string memory userRSApublicKey) public{
-        userAsymmetricKeychain[msg.sender] = userRSApublicKey;
+    //onboarding asymmetric keys for users and verifiers by storing the RSA public keys
+    function onboardAsymmetricKey(string memory RSApublicKey) public{
+        asymmetricKeychain[msg.sender] = RSApublicKey;
     }
 
     //verifiers place their requests for users to update data through this function
