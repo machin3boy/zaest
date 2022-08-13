@@ -530,7 +530,7 @@ def benchmark():
 __all__ = [encrypt, decrypt, AES]
 
 def test_one_block():
-    key = b'veratestkey12345'
+    key = b'zaesttestkey1234'
     message = b'16 byte message.'
     print("message:", message.decode('utf-8'))
     print("message as ints:", [v for v in message])
@@ -548,7 +548,7 @@ def test_one_block():
     print(d.decode("utf-8"))
 
 def test_64_bytes():
-    print(encrypt_64_bytes("16 byte message."*4, "veratestkey12345"))
+    print(encrypt_64_bytes("16 byte message."*4, "zaesttestkey1234"))
    
 if __name__ == '__main__':
     test_one_block()

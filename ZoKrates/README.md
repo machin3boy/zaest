@@ -1,1 +1,1 @@
-zk-SNARKs functions for Vera implemented with ZoKrates.
+zk-SNARKs functions for Zaest implemented with ZoKrates.

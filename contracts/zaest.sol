@@ -1,13 +1,12 @@
 /*
 
- /$$    /$$                            
-| $$   | $$                            
-| $$   | $$ /$$$$$$   /$$$$$$  /$$$$$$ 
-|  $$ / $$//$$__  $$ /$$__  $$|____  $$
- \  $$ $$/| $$$$$$$$| $$  \__/ /$$$$$$$
-  \  $$$/ | $$_____/| $$      /$$__  $$
-   \  $/  |  $$$$$$$| $$     |  $$$$$$$
-    \_/    \_______/|__/      \_______/
+{_______ {__      {_       {________  {__ __  {___ {______
+       {__       {_ __     {__      {__    {__     {__    
+      {__       {_  {__    {__       {__           {__    
+    {__        {__   {__   {______     {__         {__    
+   {__        {______ {__  {__            {__      {__    
+ {__         {__       {__ {__      {__    {__     {__    
+{___________{__         {__{________  {__ __       {__   
 
 */
 pragma solidity ^0.8.0;
@@ -18,7 +17,7 @@ import * as OnboardingIPFS from "./onboarding_ipfs.sol";
 import * as OwnershipHashes from "./ownership_hashes.sol";
 import * as OwnershipIPFS from "./ownership_ipfs.sol";
 
-contract Vera {
+contract Zaest {
 
     //zk-SNARK verifiers
     OnboardingAES.Verifier public onboardAES = new OnboardingAES.Verifier();
@@ -60,12 +59,12 @@ contract Vera {
     //the permissions verifiers have for specific actions 
     mapping (address => mapping (string => bool)) private verifierPermissions;
     
-    //Vera developers' access for privileged operations such as onboarding verifiers 
-    mapping (address => bool) private veraDeveloperAccess;
+    //Zaest developers' access for privileged operations such as onboarding verifiers 
+    mapping (address => bool) private zaestDeveloperAccess;
 
-    //checking access for privileged functions only Vera developers are allowed to access
-    modifier onlyVera {
-        require(veraDeveloperAccess[msg.sender]);
+    //checking access for privileged functions only Zaest developers are allowed to access
+    modifier onlyZaest {
+        require(zaestDeveloperAccess[msg.sender]);
         _;
     }
 
@@ -76,25 +75,25 @@ contract Vera {
         _;
     }
 
-    //this function serves as a safeguard for Vera developers/government officials/etc. to be able to change any verifiers' 
+    //this function serves as a safeguard for Zaest developers/government officials/etc. to be able to change any verifiers' 
     //permissions for a specific field or set of fields
-    function changeVerifierPermissions(address verifier, string memory permission, bool newVal) public onlyVera{
+    function changeVerifierPermissions(address verifier, string memory permission, bool newVal) public onlyZaest{
         registeredVerifiers[verifier] = true;
         verifierPermissions[verifier][permission] = newVal;
     }
 
-    function revokeVerifier(address verifier) public onlyVera{
+    function revokeVerifier(address verifier) public onlyZaest{
         registeredVerifiers[verifier] = false;
     }
 
-    //switching the privilege level for any given Vera developer - for instance to remove a retired Vera dev's access
-    function switchDeveloperAccess(address a, bool b) public onlyVera{
-        veraDeveloperAccess[a] = b;
+    //switching the privilege level for any given Zaest developer - for instance to remove a retired Zaest dev's access
+    function switchDeveloperAccess(address a, bool b) public onlyZaest{
+        zaestDeveloperAccess[a] = b;
     }
 
-    //registering the first Vera developer with the contract constructor as the first privileged user 
+    //registering the first Zaest developer with the contract constructor as the first privileged user 
     constructor(){
-        veraDeveloperAccess[msg.sender] = true;
+        zaestDeveloperAccess[msg.sender] = true;
     }
 
     //onboarding secondary symmetric keys for users
