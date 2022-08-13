@@ -27,7 +27,10 @@ contract Zaest {
     OwnershipIPFS.Verifier public ownershipIPFS = new OwnershipIPFS.Verifier();
 
     //SHA256 of user-registered symmetric keys
-    mapping (address => uint[2]) public userKeychain;
+    mapping (address => uint[2]) public userSymmetricKeychain;
+
+    //RSA public keys of users for encryption
+    mapping (address => string) public userAsymmetricKeychain;
 
     //encrypted user data housed in the smart contract
     mapping (address => mapping (uint => mapping (uint => uint[6]))) userDataSmartContract;
@@ -38,9 +41,6 @@ contract Zaest {
     //encrypted requests to update data from verifiers
     mapping (address => mapping (address => mapping (uint => string[2]))) public dataUpdateRequestsStrVar;
     mapping (address => mapping (address => mapping (uint => uint[5]))) public dataUpdateRequestIntVar;
- 
-    //permissions verifiers have for specific update functionality
-    mapping (address => mapping (string => bool)) public updateFunctionPermissions;
 
     //encrypted requests to verify ownership of user data
     mapping (address => mapping (address => mapping (uint => string))) public dataProofRequestsStrVar;
@@ -53,11 +53,14 @@ contract Zaest {
     //encrypted user proofs of ownership submitted to IPFS
     mapping (address => mapping (address => mapping (uint => uint[6]))) public userProofIPFS;
 
-    //approved list of verifier
+    //approved list of verifiers
     mapping (address => bool) registeredVerifiers;
 
-    //the permissions verifiers have for specific actions 
+    //read permissions verifiers have for specific fields 
     mapping (address => mapping (string => bool)) private verifierPermissions;
+
+    //permissions verifiers have for specific update functionality
+    mapping (address => mapping (string => bool)) public updateFunctionPermissions;
     
     //Zaest developers' access for privileged operations such as onboarding verifiers 
     mapping (address => bool) private zaestDeveloperAccess;
@@ -68,20 +71,26 @@ contract Zaest {
         _;
     }
 
-    //this is a Solidity modifier to prevent standard non-verifier users form being able to call privileged functions
+    //this is a modifier to prevent standard non-verifier users from being able to call privileged functions
     modifier onlyVerifiers {
         require(registeredVerifiers[msg.sender] == true, 
         "You must be a registered verifier to submit requests to update data");
         _;
     }
 
-    //this function serves as a safeguard for Zaest developers/government officials/etc. to be able to change any verifiers' 
-    //permissions for a specific field or set of fields
+    //this function provides the ability to change any verifiers' read permissions for a specific field or set of fields
     function changeVerifierPermissions(address verifier, string memory permission, bool newVal) public onlyZaest{
         registeredVerifiers[verifier] = true;
         verifierPermissions[verifier][permission] = newVal;
     }
 
+
+    //this function provides the ability to change any verifiers' permissions for update functionality of a field
+    function changeUpdateFunctionPermissions(address verifier, string memory permission, bool newVal) public onlyZaest{
+        updateFunctionPermissions[verifier][permission] = newVal;
+    }
+
+    //this function immediately revokes a verifier independent of which permissions they may retain
     function revokeVerifier(address verifier) public onlyZaest{
         registeredVerifiers[verifier] = false;
     }
@@ -96,10 +105,15 @@ contract Zaest {
         zaestDeveloperAccess[msg.sender] = true;
     }
 
-    //onboarding secondary symmetric keys for users
-    function onboardUserkeys(uint h_keyA, uint h_keyB) public{
-        userKeychain[msg.sender][0] = h_keyA;
-        userKeychain[msg.sender][1] = h_keyB;
+    //onboarding symmetric keys for users by storing their hashes for verifications 
+    function onboardUserSymmetricKey(uint h_keyA, uint h_keyB) public{
+        userSymmetricKeychain[msg.sender][0] = h_keyA;
+        userSymmetricKeychain[msg.sender][1] = h_keyB;
+    }
+
+    //onboarding asymmetric keys for users by storing the RSA public keys
+    function onboardUserAsymmetricKey(string memory userRSApublicKey) public{
+        userAsymmetricKeychain[msg.sender] = userRSApublicKey;
     }
 
     //verifiers place their requests for users to update data through this function
@@ -188,7 +202,7 @@ contract Zaest {
         inputAES[2] == inputHashes[2] && inputAES[3] == inputHashes[3] &&
         inputAES[4] == inputHashes[10] && inputAES[5] == inputHashes[11],
         "Proof rejected: diverging parameters submitted to different components");
-        require(userKeychain[msg.sender][0] == inputAES[4] && userKeychain[msg.sender][1] == inputAES[5],
+        require(userSymmetricKeychain[msg.sender][0] == inputAES[4] && userSymmetricKeychain[msg.sender][1] == inputAES[5],
         "Invalid private symmetric key provided with proof");
         require(dataUpdateRequestIntVar[PBKVerifier][msg.sender][nonce][0] == inputAES[6] &&
         dataUpdateRequestIntVar[PBKVerifier][msg.sender][nonce][1] == inputAES[7],
@@ -277,7 +291,7 @@ contract Zaest {
             contract by public service verifier
             c. Assert that User Data Mapping at (PBK_user) => o => (a, h_da)
         */
-        require(userKeychain[msg.sender][0] == inputHashes[7] && userKeychain[msg.sender][1] == inputHashes[8],
+        require(userSymmetricKeychain[msg.sender][0] == inputHashes[7] && userSymmetricKeychain[msg.sender][1] == inputHashes[8],
         "Invalid private symmetric key provided with proof");
         require(dataProofRequestsIntVar[PBKVerifier][msg.sender][nonce][0] == inputHashes[9] &&
         dataProofRequestsIntVar[PBKVerifier][msg.sender][nonce][0] == inputHashes[10],
