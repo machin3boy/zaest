@@ -1,18 +1,8 @@
 #!/usr/bin/env python3
-"""
-This is an exercise in secure symmetric-key encryption, implemented in pure
-Python (no external libraries needed).
-
-Original AES-128 implementation by Bo Zhu (http://about.bozhu.me) at 
-https://github.com/bozhu/AES-Python . PKCS#7 padding, CBC mode, PKBDF2, HMAC,
-byte array and string support added by me at https://github.com/boppreh/aes. 
-Other block modes contributed by @righthandabacus.
-
-
-Although this is an exercise, the `encrypt` and `decrypt` functions should
-provide reasonable security to encrypted messages.
-"""
-
+import sys
+import os
+from hashlib import pbkdf2_hmac
+from hmac import new as new_hmac, compare_digest
 
 s_box = (
     0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
@@ -438,11 +428,6 @@ class AES:
 
         return b''.join(blocks)
 
-
-import os
-from hashlib import pbkdf2_hmac
-from hmac import new as new_hmac, compare_digest
-
 AES_KEY_SIZE = 16
 HMAC_KEY_SIZE = 16
 IV_SIZE = 16
@@ -474,7 +459,8 @@ def encrypt(key, plaintext, workload=100000):
     if isinstance(plaintext, str):
         plaintext = plaintext.encode('utf-8')
 
-    salt = os.urandom(SALT_SIZE)
+    #just to avoid passing salt back and forth
+    salt = 0
     key, hmac_key, iv = get_key_iv(key, salt, workload)
     ciphertext = AES(key).encrypt_cbc(plaintext, iv)
     hmac = new_hmac(hmac_key, salt + ciphertext, 'sha256').digest()
@@ -516,10 +502,26 @@ def encrypt_64_bytes(message, key):
     message_chunks = [m.encode('utf-8') for m in message_chunks]
     key_object = AES(key)
     cipher  = [key_object.encrypt_block(m) for m in message_chunks]
-    cipher  = " ".join([str(c.hex()) for c in cipher])
+    cipherString  = " ".join([str(c.hex()) for c in cipher])
 
-    return cipher
+    print("cipher:", cipher)
+    print()
+    print("cipherString:", cipherString)
+    print()
 
+    return cipher, cipherString
+
+def decrypt_64_bytes(cipher, key):
+    key = bytes(key.encode('utf-8'))
+    key_object = AES(key)    
+    data = [key_object.decrypt_block(c) for c in cipher]
+    data = [d.decode("utf-8") for d in data]
+
+    print("data:", data)
+    print()
+
+    return " ".join([d for d in data])
+    
 def benchmark():
     key = b'P' * 16
     message = b'M' * 16
@@ -548,9 +550,22 @@ def test_one_block():
     print(d.decode("utf-8"))
 
 def test_64_bytes():
-    print(encrypt_64_bytes("16 byte message."*4, "zaesttestkey1234"))
+    x = encrypt_64_bytes("16 byte message."*4, "zaesttestkey1234")[0]
+    y = decrypt_64_bytes(x, "zaesttestkey1234")
+    print("data string:", y)
    
 if __name__ == '__main__':
-    test_one_block()
-    print()
-    test_64_bytes()
+    key     = sys.argv[1];
+    data    = sys.argv[2];
+    op      = sys.argv[3];
+    print(key)
+    print(data)
+    print(op)
+    if(op=="encrypt"):
+        res = encrypt_64_bytes(data, key)
+    else:     
+        res = decrypt_64_bytes(data, key)
+    print(res)
+    sys.stdout.flush()
+    sys.exit()
+
