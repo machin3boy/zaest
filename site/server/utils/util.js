@@ -1,46 +1,8 @@
 const crypto = require('crypto');
 const PythonShell = require('python-shell').PythonShell;
 const CryptoJS = require('crypto-js');
-const express = require('express')
-const app = express()
-const PORT = 3000
-
-let python_process;
-let key = "zaesttestkey1234";
-let data = "abcdefgh12345678abcdefgh12345678abcdefgh12345678abcdefgh12345678";
-let func = "encrypt";
-
-app.get('/start_python', function(req, res) {
-    let options = {
-        mode: 'text',
-        args: [key, data, func],
-    };
-    let pyshell = PythonShell.run('./utils/aes.py', options, function(err, results){
-        if(err)
-            throw err;    
-        res.send(results);       
-    });
-    python_process = pyshell.childProcess;
-});
-
-app.get('/stop_python', function(req, res) {
-   python_process.kill('SIGINT');
-   res.send('Stopped');
-});
-
-app.get("/", (req, res, next) => {
-    console.log("Server is live");
-    res.send("Server is live");
-})
-
-app.get('/test', (req, res) =>{
-    res.send("test");
-    console.log("test");
-})
-
-app.listen(PORT, () => {
-    console.log(`App is listening at http://localhost:${PORT}`)
-})
+const express=require('express');
+const app = express();
 
 const { publicKey, privateKey } = crypto.generateKeyPairSync("rsa", {
     modulusLength: 1024,
@@ -177,3 +139,34 @@ function strToBig(str) {
 function bigToStr(big) {
     return u8arrToStr(bigToU8arr(big));
 }
+
+let python_process;
+let key = "zaesttestkey1234";
+let data = "abcdefgh12345678abcdefgh12345678abcdefgh12345678abcdefgh12345678";
+let func = "encrypt";
+
+app.get('/start_python', function(req, res) {
+    let options = {
+        mode: 'text',
+        args: [key, data, func],
+    };
+    let pyshell = PythonShell.run('./aes.py', options, function(err, results){
+        if(err)
+            throw err;    
+        res.send(results);       
+    });
+    python_process = pyshell.childProcess;
+});
+
+app.get('/stop_python', function(req, res) {
+   python_process.kill('SIGINT');
+   res.send('Stopped');
+});
+
+app.get("/", (req, res, next) => {
+    console.log("Server is live");
+    res.send("Server is live");
+})
+
+const port=8080;
+app.listen(port, ()=>console.log(`Server connected to ${port}`));
