@@ -1,19 +1,27 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <title></title>
   <button @click="fetchData">Fetch Data</button>
   <p>Data retrieved: {{ message }}</p>
+
+  <SimpleCard :cardTitle="cardTitle"></SimpleCard>
+  <InputsCard :inputsTitle="inputsTitle"></InputsCard>  
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import HelloWorld from './components/HelloWorld.vue'
-const axios = require('axios');
+import { ref } from "vue";
+import SimpleCard from "./components/SimpleCard.vue";
+import InputsCard from "./components/InputsCard.vue";
+
+
+const axios = require("axios");
 
 const message = ref("");
 
-function fetchData(){
-  axios.get("/start_python").then(function (response){
+const cardTitle = ref("test");
+const inputsTitle = ref("test2");
+
+function fetchData() {
+  axios.get("/start_python").then(function (response) {
     console.log(response);
     message.value = response;
   });
@@ -22,20 +30,6 @@ function fetchData(){
 
 <script>
 export default {
-  name: 'App',
-  components: {
-    HelloWorld
-  }
-}
+  name: "App",
+};
 </script>
-
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>
