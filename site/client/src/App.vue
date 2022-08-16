@@ -23,8 +23,10 @@
 import { ref } from "vue";
 import SimpleCard from "./components/SimpleCard.vue";
 import InputsCard from "./components/InputsCard.vue";
+const CryptoJS = require('crypto-js');
 
 const axios = require("axios");
+const url = "http://localhost:3001";
 
 const AESresponse = ref("");
 const RSAkeysResponse = ref("");
@@ -47,21 +49,15 @@ const rsaFunction = ref("encrypt");
 //Log what /stopPython returns on GET
 const killPythonResponse = ref("");
 
-/*
 //data update request parameters
 const dPrime = ref("");
 const updateOp = ref("");
 const args = ref("");
 const variableRequested = ref("");
 const tLimit = ref("");
-const RSA_PBK_Verifier = ref("");
-const RSA_PVK_Verifier = ref("");
-const RSA_PBK_User = ref("");
-const RSA_PVK_User = ref("");
-*/
 
 function performAES(aesKeyParam, aesDataParam, aesFunctionParam) {
-  axios.get("/aes", { params: { 
+  axios.get(`${url}/aes`, { params: { 
     aesKeyParam: aesKeyParam,
     aesDataParam: aesDataParam,
     aesFunctionParam: aesFunctionParam,
@@ -71,6 +67,7 @@ function performAES(aesKeyParam, aesDataParam, aesFunctionParam) {
     response['data'][1].substring(14) : response['data'][0].substring(9); 
     aesFunction.value = aesFunction.value === "encrypt" ? "decrypt" : "encrypt";
   });
+  return aesData.value;
 }
 
 function fetchAESData() {
@@ -78,11 +75,12 @@ function fetchAESData() {
 }
 
 function getRSAKeys() {
-  axios.get("/rsaKeys").then((response) =>{
+  axios.get(`${url}/rsaKeys`).then((response) =>{
     RSAkeysResponse.value = response;
     rsaPrivateKey.value = response['data'][0].substring(5);
     rsaPublicKey.value = response['data'][1].substring(5);
   })
+  return [rsaPrivateKey.value, rsaPublicKey.value];
 }
 
 function fetchRSAKeys() {
@@ -90,7 +88,7 @@ function fetchRSAKeys() {
 }
 
 function performRSA(rsaKeyParam, rsaDataParam, rsaFunctionParam) {
-  axios.get("/rsa", { params: {
+  axios.get(`${url}/rsa`, { params: {
     rsaKeyParam: rsaKeyParam,
     rsaDataParam: rsaDataParam,
     rsaFunctionParam: rsaFunctionParam,    
@@ -99,6 +97,7 @@ function performRSA(rsaKeyParam, rsaDataParam, rsaFunctionParam) {
     rsaData.value = response['data'][1].substring(4);
     rsaFunction.value = rsaFunction.value === "encrypt" ? "decrypt" : "encrypt";
   })
+  return rsaData.value;
 }
 
 function fetchRSAData() {
@@ -111,21 +110,10 @@ function fetchRSAData() {
 }
 
 function killPython() {
-  axios.get("/stopPython").then((response) => {
+  axios.get(`${url}/stopPython`).then((response) => {
     killPythonResponse.value = response;
   })
 }
-
-/*
-function encryptRSA(PBK){
-  axios.get("/rsa", { params: {
-    publicKey: PBK,
-  }}).then((response) => {
-    return response;
-  })
-}
-
-
 
 function dataUpdateRequestParams(){
   const paddedDPrime = dPrime.value + "_".repeat(64-dPrime.value.length);
@@ -133,9 +121,28 @@ function dataUpdateRequestParams(){
   const paddedArgs   = args.value + "_".repeat(16-args.value.length);
   const paddedVar    = variableRequested.value + "_".repeat(16-variableRequested.length);
   const ru = paddedDPrime + paddedUpdate + paddedArgs + paddedVar;
+  const h_dp = hashStr(paddedDPrime);
+  const h_ru = hashStr(ru);
+  const e_ru = encryptAES(ru);
   const k  = oneTimeKey(16);
-  const kPrime = encryptRSA(RSA_PBK_Verifier);
+  const kPrime = encryptRSA(rsaPublicKey.value);
+  const nonce = oneTimeKey(16);
+  console.log(e_ru);
+  console.log(kPrime);
+  console.log(h_ru);
+  console.log(h_dp);
+  console.log(nonce);
+  console.log(tLimit.value);
+  console.log()
+}
 
+function setUpdateRequestParameters(dPrime, update, args, variable, tLimit){
+  dPrime.value = dPrime;
+  update.value = update;
+  args.value = args;
+  variable.value = variable;
+  tLimit.value = tLimit; 
+  dataUpdateRequestParams();
 }
 
 function oneTimeKey(length) {
@@ -147,7 +154,85 @@ function oneTimeKey(length) {
    }
    return result;
 }
-*/
+
+function hashHex(hexstr) { 
+    return CryptoJS.SHA256(CryptoJS.enc.Hex.parse(hexstr)).toString();
+}
+
+function hashStr(string){
+    return CryptoJS.SHA256(string);
+}
+
+function hexToBig(num) {
+    return BigInt(num)
+}
+
+function bigToHex(num) {    
+    return '0x' + BigInt(num).toString(16)
+}
+
+function strToU8arr(str) {
+    return new TextEncoder('utf-8').encode(str)
+}
+
+function u8arrToStr(u8arr) {
+    return new TextDecoder('utf-7').decode(u8arr)
+}
+
+function bigToU8arr(big) {
+    const big0 = BigInt(0)
+    const big1 = BigInt(1)
+    const big8 = BigInt(8)
+    if (big < big0) {
+        const bits = (BigInt(big.toString(2).length) / big8 + big1) * big8
+        const prefix1 = big1 << bits
+        big += prefix1
+    }
+    let hex = big.toString(16)
+    if (hex.length % 2) {
+        hex = '0' + hex
+    }
+    const len = hex.length / 2
+    const u8 = new Uint8Array(len)
+    let i = 0
+    let j = 0
+    while (i < len) {
+        u8[i] = parseInt(hex.slice(j, j + 2), 16)
+        i += 1
+        j += 2
+    }
+    return u8
+}
+
+function u8arrToBig(buf) {
+    let hex = [];
+    u8 = Uint8Array.from(buf);
+    u8.forEach(function (i) {
+        let h = i.toString(16);
+        if (h.length % 2) { h = '0' + h; }
+            hex.push(h);
+    });
+    return BigInt('0x' + hex.join(''));
+}
+
+function u32arrToHex(u32Arr) {
+    let hex = [];
+    u32 = Uint32Array.from(u32Arr)
+    u32.forEach(function (i) {
+        let h = i.toString(16);
+        hex.push('0'.repeat(8 - h.length) + h)
+    })
+    return '0x' + hex.join('');
+}
+
+function strToBig(str) {
+    return u8arrToBig(strToU8arr(str));
+}
+
+function bigToStr(big) {
+    return u8arrToStr(bigToU8arr(big));
+}
+
 
 </script>
 

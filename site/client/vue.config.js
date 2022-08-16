@@ -6,7 +6,7 @@ module.exports = defineConfig({
       allowedHosts: "all",
       proxy: {
         '/': {
-          target: 'http://localhost:3000',
+          target: 'http://localhost:3001',
         },
       },
     },
