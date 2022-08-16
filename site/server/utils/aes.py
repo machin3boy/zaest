@@ -496,7 +496,7 @@ def decrypt(key, ciphertext, workload=100000):
 
     return AES(key).decrypt_cbc(ciphertext, iv)
 
-def encrypt_64_bytes(message, key):
+def encrypt_blocks(message, key):
     key = bytes(key.encode('utf-8'))
     message_chunks = [message[i:i+16] for i in range(0, len(message), 16)]
     message_chunks = [m.encode('utf-8') for m in message_chunks]
@@ -505,20 +505,18 @@ def encrypt_64_bytes(message, key):
     cipherString  = " ".join([str(c.hex()) for c in cipher])
 
     print("cipher:", cipher)
-    print()
     print("cipherString:", cipherString)
-    print()
 
     return cipher, cipherString
 
-def decrypt_64_bytes(cipher, key):
+def decrypt_blocks(cipher, key):
     key = bytes(key.encode('utf-8'))
     key_object = AES(key)    
     data = [key_object.decrypt_block(c) for c in cipher]
     data = [d.decode("utf-8") for d in data]
+    data = "".join([d for d in data])
 
-    print("data:", data)
-    print()
+    print("message:", data)
 
     return " ".join([d for d in data])
     
@@ -558,14 +556,12 @@ if __name__ == '__main__':
     key     = sys.argv[1];
     data    = sys.argv[2];
     op      = sys.argv[3];
-    print(key)
-    print(data)
-    print(op)
     if(op=="encrypt"):
-        res = encrypt_64_bytes(data, key)
-    else:     
-        res = decrypt_64_bytes(data, key)
-    print(res)
+        res = encrypt_blocks(data, key)
+    else:
+        data = data.split(" ")
+        data = [bytes.fromhex(d) for d in data] 
+        res = decrypt_blocks(data, key)
     sys.stdout.flush()
     sys.exit()
 

@@ -6,14 +6,11 @@ const app = express()
 const PORT = 3000
 
 let python_process;
-let key = "zaesttestkey1234";
-let data = "abcdefgh12345678abcdefgh12345678abcdefgh12345678abcdefgh12345678";
-let func = "encrypt";
 
-app.get('/start_python', function(req, res) {
+app.get('/aes', function(req, res) {
     let options = {
         mode: 'text',
-        args: [key, data, func],
+        args: [req.query.aesKeyParam, req.query.aesDataParam, req.query.aesFunctionParam],
     };
     let pyshell = PythonShell.run('./utils/aes.py', options, function(err, results){
         if(err)
@@ -23,9 +20,35 @@ app.get('/start_python', function(req, res) {
     python_process = pyshell.childProcess;
 });
 
-app.get('/stop_python', function(req, res) {
+app.get('/stopPython', function(req, res) {
    python_process.kill('SIGINT');
    res.send('Stopped');
+});
+
+app.get("/rsaKeys", function(req, res) {
+    let options = {
+        mode: 'text',
+        args: ['keys'],
+    };
+    let pyshell = PythonShell.run('./utils/rsa.py', options, function(err, results){
+        if(err)
+            throw err;    
+        res.send(results);       
+    });
+    python_process = pyshell.childProcess;
+});
+
+app.get("/rsa", function(req, res) {
+    let options = {
+        mode: 'text',
+        args: [req.query.rsaKeyParam, req.query.rsaDataParam, req.query.rsaFunctionParam],
+    };
+    let pyshell = PythonShell.run('./utils/rsa.py', options, function(err, results){
+        if(err)
+            throw err;    
+        res.send(results);       
+    });
+    python_process = pyshell.childProcess;
 });
 
 app.get("/", (req, res, next) => {
