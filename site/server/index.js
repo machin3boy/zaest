@@ -12,7 +12,7 @@ app.get('/aes', function(req, res) {
         mode: 'text',
         args: [req.query.aesKeyParam, req.query.aesDataParam, req.query.aesFunctionParam],
     };
-    let pyshell = PythonShell.run('./utils/aes.py', options, function(err, results){
+    let pyshell = PythonShell.run('../../utils/aes.py', options, function(err, results){
         if(err)
             throw err;    
         res.send(results);       
@@ -30,7 +30,7 @@ app.get("/rsaKeys", function(req, res) {
         mode: 'text',
         args: ['keys'],
     };
-    let pyshell = PythonShell.run('./utils/rsa.py', options, function(err, results){
+    let pyshell = PythonShell.run('../../utils/rsa.py', options, function(err, results){
         if(err)
             throw err;    
         res.send(results);       
@@ -43,7 +43,7 @@ app.get("/rsa", function(req, res) {
         mode: 'text',
         args: [req.query.rsaKeyParam, req.query.rsaDataParam, req.query.rsaFunctionParam],
     };
-    let pyshell = PythonShell.run('./utils/rsa.py', options, function(err, results){
+    let pyshell = PythonShell.run('../../utils/rsa.py', options, function(err, results){
         if(err)
             throw err;    
         res.send(results);       
