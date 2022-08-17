@@ -2,20 +2,25 @@
   <el-card class="box-card">
     <template #header>
       <div class="card-header">
-        <span> {{ inputsTitle }}</span>
+        <span> {{ dataUpdateFields['title'] }}</span>
         <el-button class="button" text>Operation button</el-button>
       </div>
     </template>
-    <div v-for="o in 3" :key="o" class="text item">
-      {{ 'List item ' + o }}
-      <InputField></InputField>
+    <div v-for="(value, key) in dataUpdateFields['params']" class="text item">
+      {{ 'Value of ' + key + ":" }}
+      <InputField @updateInput="$emit('updateCard', key, $event)" :value="value"/>
     </div>
-  </el-card>
+    </el-card>
 </template>
 
 <script setup>
-  import InputField from "./InputField.vue";
-  defineProps(['inputsTitle']);
+import InputField from "./InputField";
+defineProps(['dataUpdateFields']);
+defineEmits(['updateCard, check']);
+
+function updateCard(field, input){
+  $emit('updateCard', field, value);
+}
 </script>
 
 <style>

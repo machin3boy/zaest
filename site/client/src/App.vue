@@ -15,8 +15,9 @@
   <button @click="killPython">Kill Python</button>
   <p>Data received: {{ killPythonResponse }}</p> 
   <p></p>
-  <SimpleCard :cardTitle="cardTitle"></SimpleCard>
-  <InputsCard :inputsTitle="inputsTitle"></InputsCard>  
+  <InputsCard :dataUpdateFields="dataUpdateFields"
+              @updateCard="dataUpdateChildInput"
+  ></InputsCard>
 </template>
 
 <script setup>
@@ -32,8 +33,29 @@ const AESresponse = ref("");
 const RSAkeysResponse = ref("");
 const RSAresponse = ref("");
 
-const cardTitle = ref("test");
-const inputsTitle = ref("test2");
+//data update request card
+const dataUpdateFields = ref({
+  "title": "data update card",
+  "params": {
+    "dPrime": "",
+    "updateOp": "",
+    "args": "",
+    "variableRequested": "",
+    "tLimit": 0,
+  },
+  "results": {
+    "e_ru": "",
+    "kPrime": "",
+    "h_dp": "",
+    "h_ru": "",
+    "nonce": "",
+    "tLimit": 0, 
+  }
+})
+
+function dataUpdateChildInput(field, input) {
+  dataUpdateFields.value[field] = input;
+}
 
 //AES parameters
 const aesKey = ref("zaesttestkey1234");
@@ -48,13 +70,6 @@ const rsaFunction = ref("encrypt");
 
 //Log what /stopPython returns on GET
 const killPythonResponse = ref("");
-
-//data update request parameters
-const dPrime = ref("");
-const updateOp = ref("");
-const args = ref("");
-const variableRequested = ref("");
-const tLimit = ref("");
 
 function performAES(aesKeyParam, aesDataParam, aesFunctionParam) {
   axios.get(`${url}/aes`, { params: { 
@@ -115,11 +130,11 @@ function killPython() {
   })
 }
 
-function dataUpdateRequestParams(){
-  const paddedDPrime = dPrime.value + "_".repeat(64-dPrime.value.length);
-  const paddedUpdate = updateOp.value + "_".repeat(16-updateOp.value.length);
-  const paddedArgs   = args.value + "_".repeat(16-args.value.length);
-  const paddedVar    = variableRequested.value + "_".repeat(16-variableRequested.length);
+function setUpdateRequestParameters(dPrime, update, args, variable, tLimit){
+  const paddedDPrime = dPrime + "_".repeat(64-dPrime.length);
+  const paddedUpdate = update + "_".repeat(16-update.length);
+  const paddedArgs   = args + "_".repeat(16-args.length);
+  const paddedVar    = variable + "_".repeat(16-variable.length);
   const ru = paddedDPrime + paddedUpdate + paddedArgs + paddedVar;
   const h_dp = hashStr(paddedDPrime);
   const h_ru = hashStr(ru);
@@ -127,22 +142,7 @@ function dataUpdateRequestParams(){
   const k  = oneTimeKey(16);
   const kPrime = encryptRSA(rsaPublicKey.value);
   const nonce = oneTimeKey(16);
-  console.log(e_ru);
-  console.log(kPrime);
-  console.log(h_ru);
-  console.log(h_dp);
-  console.log(nonce);
-  console.log(tLimit.value);
-  console.log()
-}
-
-function setUpdateRequestParameters(dPrime, update, args, variable, tLimit){
-  dPrime.value = dPrime;
-  update.value = update;
-  args.value = args;
-  variable.value = variable;
-  tLimit.value = tLimit; 
-  dataUpdateRequestParams();
+  dataUpdateRequestResultValues.value = [e_ru, kPrime, h_dp, h_ru, nonce, tLimit.value];
 }
 
 function oneTimeKey(length) {
