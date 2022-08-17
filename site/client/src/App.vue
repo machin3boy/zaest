@@ -44,7 +44,7 @@ const dataUpdateFields = ref({
     "updateOp": "",
     "args": "",
     "variableRequested": "",
-    "tLimit": 300,
+    "tLimit": "300",
   },
   "results": {
     "e_ru": "",
@@ -52,32 +52,34 @@ const dataUpdateFields = ref({
     "h_dp": "",
     "h_ru": "",
     "nonce": "",
-    "tLimit": 0, 
+    "tLimit": "", 
   }
 })
 
 function dataUpdateChildInput(field, input) {
-  dataUpdateFields.value[field] = input;
+  dataUpdateFields.value.params[field] = input;
 }
 
-function dataUpdateGenerateResults(){
-  const paddedDPrime = dPrime.value + "_".repeat(64-dPrime.length);
-  const paddedUpdate = update.value + "_".repeat(16-update.length);
-  const paddedArgs   = args.value + "_".repeat(16-args.length);
-  const paddedVar    = variable.value + "_".repeat(16-variable.length);
+async function dataUpdateGenerateResults(){
+  const p = dataUpdateFields.value.params;
+  const paddedDPrime = p.dPrime + "_".repeat(64-p.dPrime.length);
+  const paddedUpdate = p.updateOp + "_".repeat(16-p.updateOp.length);
+  const paddedArgs   = p.args + "_".repeat(16-p.args.length);
+  const paddedVar    = p.variableRequested + "_".repeat(16-p.variableRequested.length);
   const ru = paddedDPrime + paddedUpdate + paddedArgs + paddedVar;
   const h_dp = hashStr(paddedDPrime);
   const h_ru = hashStr(ru);
-  const e_ru = encryptAES(ru);
+  const e_ru = await performAES(aesKey.value, ru, 'encrypt');
   const k  = oneTimeKey(16);
-  const kPrime = encryptRSA(rsaPublicKey.value);
+  const kPrime = await performRSA(rsaPublicKey.value, k, 'encrypt');
   const nonce = oneTimeKey(16);
   dataUpdateFields.value.results['e_ru'] = e_ru;
   dataUpdateFields.value.results['kPrime'] = kPrime;
-  dataUpdateFields.value.results['h_dp'] = strToBig(h_dp);
-  dataUpdateFields.value.results['h_ru'] = strToBig(h_ru);
+  dataUpdateFields.value.results['h_dp'] = strToBig(h_dp).toString();
+  dataUpdateFields.value.results['h_ru'] = strToBig(h_ru).toString();
   dataUpdateFields.value.results['nonce'] = nonce;
   dataUpdateFields.value.results['tLimit'] = dataUpdateFields.value.params['tLimit'];
+  console.log("data update generate results");
 }
 
 //AES parameters
@@ -94,26 +96,26 @@ const rsaFunction = ref("encrypt");
 //Log what /stopPython returns on GET
 const killPythonResponse = ref("");
 
-function performAES(aesKeyParam, aesDataParam, aesFunctionParam) {
-  axios.get(`${url}/aes`, { params: { 
+async function performAES(aesKeyParam, aesDataParam, aesFunctionParam) {
+  await axios.get(`${url}/aes`, { params: { 
     aesKeyParam: aesKeyParam,
     aesDataParam: aesDataParam,
     aesFunctionParam: aesFunctionParam,
   }}).then((response) => {
     AESresponse.value = response;
-    aesData.value = aesFunction.value === "encrypt" ? 
+    aesData.value = aesFunctionParam === "encrypt" ? 
     response['data'][1].substring(14) : response['data'][0].substring(9); 
     aesFunction.value = aesFunction.value === "encrypt" ? "decrypt" : "encrypt";
   });
-  return aesData.value;
+  return aesData.value;    
 }
 
 function fetchAESData() {
   performAES(aesKey.value, aesData.value, aesFunction.value);
 }
 
-function getRSAKeys() {
-  axios.get(`${url}/rsaKeys`).then((response) =>{
+async function getRSAKeys() {
+  await axios.get(`${url}/rsaKeys`).then((response) =>{
     RSAkeysResponse.value = response;
     rsaPrivateKey.value = response['data'][0].substring(5);
     rsaPublicKey.value = response['data'][1].substring(5);
@@ -125,8 +127,8 @@ function fetchRSAKeys() {
   getRSAKeys();
 }
 
-function performRSA(rsaKeyParam, rsaDataParam, rsaFunctionParam) {
-  axios.get(`${url}/rsa`, { params: {
+async function performRSA(rsaKeyParam, rsaDataParam, rsaFunctionParam) {
+  await axios.get(`${url}/rsa`, { params: {
     rsaKeyParam: rsaKeyParam,
     rsaDataParam: rsaDataParam,
     rsaFunctionParam: rsaFunctionParam,    
@@ -214,7 +216,7 @@ function bigToU8arr(big) {
 
 function u8arrToBig(buf) {
     let hex = [];
-    u8 = Uint8Array.from(buf);
+    let u8 = Uint8Array.from(buf);
     u8.forEach(function (i) {
         let h = i.toString(16);
         if (h.length % 2) { h = '0' + h; }
@@ -225,7 +227,7 @@ function u8arrToBig(buf) {
 
 function u32arrToHex(u32Arr) {
     let hex = [];
-    u32 = Uint32Array.from(u32Arr)
+    let u32 = Uint32Array.from(u32Arr)
     u32.forEach(function (i) {
         let h = i.toString(16);
         hex.push('0'.repeat(8 - h.length) + h)

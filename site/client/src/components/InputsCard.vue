@@ -18,9 +18,6 @@ import InputField from "./InputField";
 defineProps(['fields']);
 defineEmits(['updateCard, generateResults']);
 
-function updateCard(field, input){
-  $emit('updateCard', field, value);
-}
 </script>
 
 <style>

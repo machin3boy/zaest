@@ -7,7 +7,13 @@
       </div>
     </template>
     <div v-for="(value, key) in fields['results']" class="my-1">
+      <p v-if="value.length>16">
+        {{ 'value of ' + key + ": " + value.substring(0,10) 
+           + " ... " + value.substring(value.length-10)}}
+      </p>
+      <p v-else>
         {{ 'value of ' + key + ": " + value }}
+      </p>
     </div>
   </el-card>
 </template>
