@@ -1,23 +1,25 @@
 <template>
   <title>Backend Experiments</title>
-  <button @click="fetchAESData">Fetch AES Data</button>
-  <p>Data retrieved: {{ AESresponse }}</p>
-  <p>AES data: {{ aesData }}</p>
-  <p>AES function: {{ aesFunction }}</p>
-  <button @click="fetchRSAKeys">Fetch RSA Keys</button>
-  <p>Data retrieved: {{ RSAkeysResponse }}</p>
-  <p>PVK: {{ rsaPrivateKey }}</p>
-  <p>PBK: {{ rsaPublicKey }}</p>
-  <button @click="fetchRSAData">Fetch RSA Data</button>
-  <p>Data retrieved: {{ RSAresponse }}</p> 
-  <p>RSA data: {{ rsaData }}</p>
-  <p>RSA function: {{ rsaFunction }}</p>
-  <button @click="killPython">Kill Python</button>
-  <p>Data received: {{ killPythonResponse }}</p> 
-  <p></p>
-  <InputsCard :dataUpdateFields="dataUpdateFields"
+  <InputsCard :fields="dataUpdateFields"
               @updateCard="dataUpdateChildInput"
-  ></InputsCard>
+              @generateResults="dataUpdateGenerateResults" class="mt-5 mb-3 mx-3"/>
+  <SimpleCard :fields="dataUpdateFields" class="m-3"/>
+  <el-button @click="fetchAESData" class="m-3">Fetch AES Data</el-button>
+  <p class="mx-6"> Data retrieved: {{ AESresponse }}</p>
+  <p class="mx-6"> AES data: {{ aesData }}</p>
+  <p class="mx-6"> AES function: {{ aesFunction }}</p>
+  <el-button @click="fetchRSAKeys" class="m-3">Fetch RSA Keys</el-button>
+  <p class="mx-6"> Data retrieved: {{ RSAkeysResponse }}</p>
+  <p class="mx-6"> PVK: {{ rsaPrivateKey }}</p>
+  <p class="mx-6"> PBK: {{ rsaPublicKey }}</p>
+  <el-button @click="fetchRSAData" class="m-3">Fetch RSA Data</el-button>
+  <p class="mx-6"> Data retrieved: {{ RSAresponse }}</p> 
+  <p class="mx-6"> RSA data: {{ rsaData }}</p>
+  <p class="mx-6"> RSA function: {{ rsaFunction }}</p>
+  <el-button @click="killPython" class="m-3">Kill Python</el-button>
+  <p class="mx-6"> Data received: {{ killPythonResponse }}</p> 
+  <p class="mx-6 my-5"> </p>
+
 </template>
 
 <script setup>
@@ -35,13 +37,14 @@ const RSAresponse = ref("");
 
 //data update request card
 const dataUpdateFields = ref({
-  "title": "data update card",
+  "title update": "input data update params",
+  "title results": "data update tx details",
   "params": {
     "dPrime": "",
     "updateOp": "",
     "args": "",
     "variableRequested": "",
-    "tLimit": 0,
+    "tLimit": 300,
   },
   "results": {
     "e_ru": "",
@@ -55,6 +58,26 @@ const dataUpdateFields = ref({
 
 function dataUpdateChildInput(field, input) {
   dataUpdateFields.value[field] = input;
+}
+
+function dataUpdateGenerateResults(){
+  const paddedDPrime = dPrime.value + "_".repeat(64-dPrime.length);
+  const paddedUpdate = update.value + "_".repeat(16-update.length);
+  const paddedArgs   = args.value + "_".repeat(16-args.length);
+  const paddedVar    = variable.value + "_".repeat(16-variable.length);
+  const ru = paddedDPrime + paddedUpdate + paddedArgs + paddedVar;
+  const h_dp = hashStr(paddedDPrime);
+  const h_ru = hashStr(ru);
+  const e_ru = encryptAES(ru);
+  const k  = oneTimeKey(16);
+  const kPrime = encryptRSA(rsaPublicKey.value);
+  const nonce = oneTimeKey(16);
+  dataUpdateFields.value.results['e_ru'] = e_ru;
+  dataUpdateFields.value.results['kPrime'] = kPrime;
+  dataUpdateFields.value.results['h_dp'] = strToBig(h_dp);
+  dataUpdateFields.value.results['h_ru'] = strToBig(h_ru);
+  dataUpdateFields.value.results['nonce'] = nonce;
+  dataUpdateFields.value.results['tLimit'] = dataUpdateFields.value.params['tLimit'];
 }
 
 //AES parameters
@@ -128,21 +151,6 @@ function killPython() {
   axios.get(`${url}/stopPython`).then((response) => {
     killPythonResponse.value = response;
   })
-}
-
-function setUpdateRequestParameters(dPrime, update, args, variable, tLimit){
-  const paddedDPrime = dPrime + "_".repeat(64-dPrime.length);
-  const paddedUpdate = update + "_".repeat(16-update.length);
-  const paddedArgs   = args + "_".repeat(16-args.length);
-  const paddedVar    = variable + "_".repeat(16-variable.length);
-  const ru = paddedDPrime + paddedUpdate + paddedArgs + paddedVar;
-  const h_dp = hashStr(paddedDPrime);
-  const h_ru = hashStr(ru);
-  const e_ru = encryptAES(ru);
-  const k  = oneTimeKey(16);
-  const kPrime = encryptRSA(rsaPublicKey.value);
-  const nonce = oneTimeKey(16);
-  dataUpdateRequestResultValues.value = [e_ru, kPrime, h_dp, h_ru, nonce, tLimit.value];
 }
 
 function oneTimeKey(length) {

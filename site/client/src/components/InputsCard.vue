@@ -2,12 +2,12 @@
   <el-card class="box-card">
     <template #header>
       <div class="card-header">
-        <span> {{ dataUpdateFields['title'] }}</span>
-        <el-button class="button" text>Operation button</el-button>
+        <span> {{ fields['title update'] }}</span>
+        <el-button @click="$emit('generateResults')" class="button" text>generate results</el-button>
       </div>
     </template>
-    <div v-for="(value, key) in dataUpdateFields['params']" class="text item">
-      {{ 'Value of ' + key + ":" }}
+    <div v-for="(value, key) in fields['params']" class="text item">
+      {{ 'value of ' + key + ":" }}
       <InputField @updateInput="$emit('updateCard', key, $event)" :value="value"/>
     </div>
     </el-card>
@@ -15,8 +15,8 @@
 
 <script setup>
 import InputField from "./InputField";
-defineProps(['dataUpdateFields']);
-defineEmits(['updateCard, check']);
+defineProps(['fields']);
+defineEmits(['updateCard, generateResults']);
 
 function updateCard(field, input){
   $emit('updateCard', field, value);

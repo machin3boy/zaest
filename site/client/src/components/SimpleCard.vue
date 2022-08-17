@@ -2,16 +2,18 @@
   <el-card class="box-card">
     <template #header>
       <div class="card-header">
-        <span> {{ cardTitle }}</span>
-        <el-button class="button" text>Operation button</el-button>
+        <span> {{ fields['title results'] }}</span>
+        <el-button class="button" text>call smart contract</el-button>
       </div>
     </template>
-    <div v-for="o in 4" :key="o" class="text item">{{ 'List item ' + o }}</div>
+    <div v-for="(value, key) in fields['results']" class="my-1">
+        {{ 'value of ' + key + ": " + value }}
+    </div>
   </el-card>
 </template>
 
 <script setup>
-  defineProps(['cardTitle']);
+  defineProps(['fields']);
 </script>
 
 <style>
