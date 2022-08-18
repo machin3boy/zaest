@@ -3,11 +3,11 @@
   <InputsCard :fields="dataUpdateFields"
               @updateCard="dataUpdateChildInput"
               @generateResults="dataUpdateGenerateResults" class="mt-5 mb-3 mx-3"/>
-  <SimpleCard :fields="dataUpdateFields" class="m-3"
-              :buttonText="SCbuttonText"/>
+  <SimpleCard :fields="dataUpdateFields" class="m-3" />
   <SimpleCard :fields="updateRequestDecrypted" class="m-3"
-              :buttonText="decryptUpdateRequestText"
               @buttonClick="decryptUpdateRequest"/>
+  <SimpleCard :fields="zkSNARKsOnboarding" class="m-3"
+              @buttonClick="generateOnboardingProofHashes" />
 
   <el-button @click="fetchAESData" class="m-3">Fetch AES Data</el-button>
   <p class="mx-6"> Data retrieved: {{ AESresponse }}</p>
@@ -39,8 +39,6 @@ const url = "http://localhost:3001";
 const AESresponse = ref("");
 const RSAkeysResponse = ref("");
 const RSAresponse = ref("");
-const SCbuttonText = ref("call smart contract");
-const decryptUpdateRequestText = ref("decrypt update request")
 
 //AES parameters
 const aesKey = ref("zaesttestkey1234");
@@ -95,6 +93,14 @@ const updateRequestDecrypted = ref({
   }
 })
 
+const zkSNARKsOnboarding = ref({
+  "title results": "zk-SNARKs proof",
+  "button text": "generate zk-SNARKs proof",
+  "results": {
+    "proof": "",
+  }
+})
+
 function dataUpdateChildInput(field, input) {
   dataUpdateFields.value.params[field] = input;
 }
@@ -107,7 +113,7 @@ async function decryptUpdateRequest(){
   updateRequestDecrypted.value.results["dPrime"] = ru.substring(0, 64);
   updateRequestDecrypted.value.results["updateOp"] = ru.substring(64, 80);
   updateRequestDecrypted.value.results["args"] = ru.substring(80, 96);
-  updateRequestDecrypted.value.results["variableRequested"] = ru.substring(96, 112);
+  updateRequestDecrypted.value.results["variableRequested"] = ru.substring(96);
   updateRequestDecrypted.value.results["tLimit"] = d.tLimit; 
 } 
 
@@ -116,7 +122,7 @@ async function dataUpdateGenerateResults(){
   const paddedDPrime = p.dPrime + "_".repeat(64-p.dPrime.length);
   const paddedUpdate = p.updateOp + "_".repeat(16-p.updateOp.length);
   const paddedArgs   = p.args + "_".repeat(16-p.args.length);
-  const paddedVar    = p.variableRequested + "_".repeat(16-p.variableRequested.length);
+  const paddedVar    = p.variableRequested + "_".repeat(32-p.variableRequested.length);
   const ru = paddedDPrime + paddedUpdate + paddedArgs + paddedVar;
   const h_dp = hashStr(paddedDPrime);
   const h_dp_0 = h_dp.substring(0, h_dp.length/2);
@@ -138,6 +144,47 @@ async function dataUpdateGenerateResults(){
   dataUpdateFields.value.results['nonce'] = nonce;
   dataUpdateFields.value.results['tLimit'] = dataUpdateFields.value.params['tLimit'];
   console.log("data update generate results");
+}
+
+async function generateOnboardingProofHashes(){
+  const d = updateRequestDecrypted.value.results;
+  let a = await performAES(aesKey.value, d.dPrime, 'encrypt')
+  a = a.replace(/\s/g, '');
+  let aA = a.substring(0,32);
+  let aB = a.substring(32,64);
+  let aC = a.substring(64,96);
+  let aD = a.substring(96, 128);
+  let h_da = hashHex(strToHex(d.dPrime.substring(0, 16)) + 
+                     strToHex(d.dPrime.substring(16, 32)) + 
+                     strToHex(d.dPrime.substring(32, 48)) + 
+                     strToHex(d.dPrime.substring(48)) + 
+                     a + strToHex(aesKey.value));
+  await axios.get(`${url}/zokratesOnboardingHashes`, { params: {
+    u:  strToBig(aesKey.value),
+    dA: strToBig(d.dPrime.substring(0, 16)),
+    dB: strToBig(d.dPrime.substring(16, 32)),
+    dC: strToBig(d.dPrime.substring(32, 48)),
+    dD: strToBig(d.dPrime.substring(48)),
+    up: strToBig(d.updateOp),
+    ar: strToBig(d.args),
+    vA: strToBig(d.variableRequested.substring(0, 16)),
+    vB: strToBig(d.variableRequested.substring(16)),
+    aA: hexToBig(aA),
+    aB: hexToBig(aB),
+    aC: hexToBig(aC),
+    aD: hexToBig(aD),
+    oA: hexToBig(hashStr(d.variableRequested + aesKey.value).substring(0,32)),
+    oB: hexToBig(hashStr(d.variableRequested + aesKey.value).substring(32)),
+    h_keyA: hexToBig(hashStr(aesKey.value).substring(0, 32)),
+    h_keyB: hexToBig(hashStr(aesKey.value).substring(32)),
+    h_ruA: hexToBig(hashStr(d.ru).substring(0, 32)),
+    h_ruB: hexToBig(hashStr(d.ru).substring(32)),
+    h_daA: hexToBig(h_da.substring(0, 32)),
+    h_daB: hexToBig(h_da.substring(32)),
+    }}).then((response) => {
+      zkSNARKsOnboarding.value.results['proof'] = JSON.stringify(response);
+    });
+    return zkSNARKsOnboarding.value.results['proof'];
 }
 
 async function performAES(aesKeyParam, aesDataParam, aesFunctionParam) {
@@ -218,11 +265,15 @@ function hashStr(string){
 }
 
 function hexToBig(num) {
-    return BigInt(num)
+    return BigInt('0x'+num);
 }
 
 function bigToHex(num) {    
     return BigInt(num).toString(16)
+}
+
+function strToHex(s){
+  return bigToHex(strToBig(s));
 }
 
 function strToU8arr(str) {

@@ -2,6 +2,8 @@ const PythonShell = require('python-shell').PythonShell;
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const execSync = require('child_process').execSync;
+const fs = require('fs');
 app.use(cors());
 const PORT = 3001;
 
@@ -50,6 +52,26 @@ app.get('/stopPython', function(req, res) {
     python_process.kill('SIGINT');
     res.send('Stopped');
  });
+
+app.get('/zokratesOnboardingHashes', function(req, res) {
+    const r = req.query;
+    const proofCommand = "current_dir=$PWD; cd ../../ZoKrates/onboarding_hashes_params; " +
+                     "zokrates compute-witness -a " + r.u + " " +  r.dA + " " + r.dB + 
+                     " " + r.dC + " " +  r.dD + " " + r.up + " " + r.ar + " " + r.vA + 
+                     " " + r.vB + " " + r.aA + " " + r.aB + " " + r.aC + " " + r.aD + 
+                     " " + r.oA + " " + r.oB + " " + r.h_keyA + " " + r.h_keyB + " " + 
+                     r.h_ruA + " " + r.h_ruB + " " + r.h_daA + " " + r.h_daB + 
+                     "; zokrates generate-proof; cd $current_dir";                 
+    const proofLocation = "../../ZoKrates/onboarding_hashes_params/proof.json"
+    const proofCommandOutput = execSync(proofCommand).toString();
+    
+    console.log(r);   
+    console.log(proofCommandOutput);
+
+    let proof = JSON.parse(fs.readFileSync(proofLocation, 'utf8'));
+    console.log("proof index.js:" + JSON.stringify(proof));
+    res.send(JSON.parse(fs.readFileSync(proofLocation, 'utf8')));
+});
 
 app.get('/', (req, res) =>{
     res.send("Server is live");
