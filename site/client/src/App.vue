@@ -3,7 +3,12 @@
   <InputsCard :fields="dataUpdateFields"
               @updateCard="dataUpdateChildInput"
               @generateResults="dataUpdateGenerateResults" class="mt-5 mb-3 mx-3"/>
-  <SimpleCard :fields="dataUpdateFields" class="m-3"/>
+  <SimpleCard :fields="dataUpdateFields" class="m-3"
+              :buttonText="SCbuttonText"/>
+  <SimpleCard :fields="updateRequestDecrypted" class="m-3"
+              :buttonText="decryptUpdateRequestText"
+              @buttonClick="decryptUpdateRequest"/>
+
   <el-button @click="fetchAESData" class="m-3">Fetch AES Data</el-button>
   <p class="mx-6"> Data retrieved: {{ AESresponse }}</p>
   <p class="mx-6"> AES data: {{ aesData }}</p>
@@ -34,53 +39,8 @@ const url = "http://localhost:3001";
 const AESresponse = ref("");
 const RSAkeysResponse = ref("");
 const RSAresponse = ref("");
-
-//data update request card
-const dataUpdateFields = ref({
-  "title update": "input data update params",
-  "title results": "data update tx details",
-  "params": {
-    "dPrime": "",
-    "updateOp": "",
-    "args": "",
-    "variableRequested": "",
-    "tLimit": "300",
-  },
-  "results": {
-    "e_ru": "",
-    "kPrime": "",
-    "h_dp": "",
-    "h_ru": "",
-    "nonce": "",
-    "tLimit": "", 
-  }
-})
-
-function dataUpdateChildInput(field, input) {
-  dataUpdateFields.value.params[field] = input;
-}
-
-async function dataUpdateGenerateResults(){
-  const p = dataUpdateFields.value.params;
-  const paddedDPrime = p.dPrime + "_".repeat(64-p.dPrime.length);
-  const paddedUpdate = p.updateOp + "_".repeat(16-p.updateOp.length);
-  const paddedArgs   = p.args + "_".repeat(16-p.args.length);
-  const paddedVar    = p.variableRequested + "_".repeat(16-p.variableRequested.length);
-  const ru = paddedDPrime + paddedUpdate + paddedArgs + paddedVar;
-  const h_dp = hashStr(paddedDPrime);
-  const h_ru = hashStr(ru);
-  const e_ru = await performAES(aesKey.value, ru, 'encrypt');
-  const k  = oneTimeKey(16);
-  const kPrime = await performRSA(rsaPublicKey.value, k, 'encrypt');
-  const nonce = oneTimeKey(16);
-  dataUpdateFields.value.results['e_ru'] = e_ru;
-  dataUpdateFields.value.results['kPrime'] = kPrime;
-  dataUpdateFields.value.results['h_dp'] = strToBig(h_dp).toString();
-  dataUpdateFields.value.results['h_ru'] = strToBig(h_ru).toString();
-  dataUpdateFields.value.results['nonce'] = nonce;
-  dataUpdateFields.value.results['tLimit'] = dataUpdateFields.value.params['tLimit'];
-  console.log("data update generate results");
-}
+const SCbuttonText = ref("call smart contract");
+const decryptUpdateRequestText = ref("decrypt update request")
 
 //AES parameters
 const aesKey = ref("zaesttestkey1234");
@@ -95,6 +55,90 @@ const rsaFunction = ref("encrypt");
 
 //Log what /stopPython returns on GET
 const killPythonResponse = ref("");
+
+//data update request card
+const dataUpdateFields = ref({
+  "title update": "input data update params",
+  "title results": "data update tx details",
+  "button text": "call smart contract",
+  "params": {
+    "dPrime": "",
+    "updateOp": "",
+    "args": "",
+    "variableRequested": "",
+    "tLimit": "300",
+  },
+  "results": {
+    "e_ru": "",
+    "k": "",
+    "kPrime": "",
+    "h_dp_0": "",
+    "h_dp_1": "",
+    "h_ru_0": "",
+    "h_ru_1": "",
+    "nonce": "",
+    "tLimit": "", 
+  }
+})
+
+const updateRequestDecrypted = ref({
+  "title results": "data update tx decrypted",
+  "button text": "decrypt request",
+  "results": {
+    "k": "",
+    "ru": "",
+    "dPrime": "",
+    "updateOp": "",
+    "args": "",
+    "variableRequested": "",
+    "tLimit": "",
+  }
+})
+
+function dataUpdateChildInput(field, input) {
+  dataUpdateFields.value.params[field] = input;
+}
+
+async function decryptUpdateRequest(){
+  const d = dataUpdateFields.value.results;
+  updateRequestDecrypted.value.results["k"] = await performRSA(rsaPrivateKey.value, d.kPrime, 'decrypt');
+  const ru = await performAES(aesKey.value, d.e_ru, 'decrypt');
+  updateRequestDecrypted.value.results["ru"] = ru
+  updateRequestDecrypted.value.results["dPrime"] = ru.substring(0, 64);
+  updateRequestDecrypted.value.results["updateOp"] = ru.substring(64, 80);
+  updateRequestDecrypted.value.results["args"] = ru.substring(80, 96);
+  updateRequestDecrypted.value.results["variableRequested"] = ru.substring(96, 112);
+  updateRequestDecrypted.value.results["tLimit"] = d.tLimit; 
+} 
+
+async function dataUpdateGenerateResults(){
+  const p = dataUpdateFields.value.params;
+  const paddedDPrime = p.dPrime + "_".repeat(64-p.dPrime.length);
+  const paddedUpdate = p.updateOp + "_".repeat(16-p.updateOp.length);
+  const paddedArgs   = p.args + "_".repeat(16-p.args.length);
+  const paddedVar    = p.variableRequested + "_".repeat(16-p.variableRequested.length);
+  const ru = paddedDPrime + paddedUpdate + paddedArgs + paddedVar;
+  const h_dp = hashStr(paddedDPrime);
+  const h_dp_0 = h_dp.substring(0, h_dp.length/2);
+  const h_dp_1 = h_dp.substring(h_dp.length/2); 
+  const h_ru = hashStr(ru);
+  const h_ru_0 = h_ru.substring(0, h_ru.length/2);
+  const h_ru_1 = h_ru.substring(h_ru.length/2);
+  const e_ru = await performAES(aesKey.value, ru, 'encrypt');
+  const k  = oneTimeKey(16);
+  const kPrime = await performRSA(rsaPublicKey.value, k, 'encrypt');
+  const nonce = oneTimeKey(16);
+  dataUpdateFields.value.results['k'] = k;
+  dataUpdateFields.value.results['e_ru'] = e_ru;
+  dataUpdateFields.value.results['kPrime'] = kPrime;
+  dataUpdateFields.value.results['h_dp_0'] = strToBig(h_dp_0).toString();
+  dataUpdateFields.value.results['h_dp_1'] = strToBig(h_dp_1).toString();
+  dataUpdateFields.value.results['h_ru_0'] = strToBig(h_ru_0).toString();
+  dataUpdateFields.value.results['h_ru_1'] = strToBig(h_ru_1).toString();
+  dataUpdateFields.value.results['nonce'] = nonce;
+  dataUpdateFields.value.results['tLimit'] = dataUpdateFields.value.params['tLimit'];
+  console.log("data update generate results");
+}
 
 async function performAES(aesKeyParam, aesDataParam, aesFunctionParam) {
   await axios.get(`${url}/aes`, { params: { 
@@ -170,7 +214,7 @@ function hashHex(hexstr) {
 }
 
 function hashStr(string){
-    return CryptoJS.SHA256(string);
+    return CryptoJS.SHA256(string).toString();
 }
 
 function hexToBig(num) {
@@ -178,7 +222,7 @@ function hexToBig(num) {
 }
 
 function bigToHex(num) {    
-    return '0x' + BigInt(num).toString(16)
+    return BigInt(num).toString(16)
 }
 
 function strToU8arr(str) {

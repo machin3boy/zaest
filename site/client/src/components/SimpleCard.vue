@@ -3,11 +3,11 @@
     <template #header>
       <div class="card-header">
         <span> {{ fields['title results'] }}</span>
-        <el-button class="button" text>call smart contract</el-button>
+        <el-button @click="$emit('buttonClick')" class="button" text> {{ fields['button text'] }} </el-button>
       </div>
     </template>
     <div v-for="(value, key) in fields['results']" class="my-1">
-      <p v-if="value.length>16">
+      <p v-if="value.length>24">
         {{ 'value of ' + key + ": " + value.substring(0,10) 
            + " ... " + value.substring(value.length-10)}}
       </p>
@@ -19,6 +19,7 @@
 </template>
 
 <script setup>
+  defineEmits(['buttonClick']);
   defineProps(['fields']);
 </script>
 

@@ -6,9 +6,9 @@
         <el-button @click="$emit('generateResults')" class="button" text>generate results</el-button>
       </div>
     </template>
-    <div v-for="(value, key) in fields['params']" class="text item">
-      {{ 'value of ' + key + ":" }}
-      <InputField @updateInput="$emit('updateCard', key, $event)" :value="value"/>
+    <div v-for="(value, key) in fields['params']">
+      <p class="mb-1">{{ 'value of ' + key + ":" }}</p>
+      <InputField @updateInput="$emit('updateCard', key, $event)" :value="value" class="mb-1"/>
     </div>
     </el-card>
 </template>
