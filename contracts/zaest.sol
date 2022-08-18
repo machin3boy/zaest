@@ -169,9 +169,8 @@ contract Zaest {
 
             Hashes: conditions 1, 2, 3, 5, 6
             Hashes inputs: [0]: aA,[1]: aB,[2]: aC,[3]: aD, [4]: oA, [5]: oB,
-                        [6]: cA,[7]: cB,[8]: cC,[9]: cD, [10]: h_keyA,
-                        [11]: h_keyB, [12]: h_ruA, [13]: h_ruB, [14]: h_daA,
-                        [15]: h_daB
+                        [6]: h_keyA, [7]: h_keyB, [8]: h_ruA, [9]: h_ruB, 
+                        [10]: h_daA, [11]: h_daB
             
             IPFS: condition 7
             IPFS inputs: [0]: aA, [1]: aB, [2]: aC, [3]: aD, [4]: oA,
@@ -183,7 +182,7 @@ contract Zaest {
     //users onboard data into the smart contract through this function
     function onboardDataSmartContract(address PBKVerifier, uint nonce, OnboardingAES.Verifier.Proof memory proofAES, 
                                       uint[9] memory inputAES, OnboardingHashes.Verifier.Proof memory proofHashes, 
-                                      uint[17] memory inputHashes) public returns (bool){
+                                      uint[13] memory inputHashes) public returns (bool){
         /*
             a. Assert that on-chain hash == h_key computed off-chain provided to smart
             contract by user when onboarding in User Keychain Mapping for PBK
@@ -194,28 +193,28 @@ contract Zaest {
             d. Assert that on-chain hash == h_dp computed off-chain provided to smart
             contract by verifier
         */
-        require(inputAES[8] == 1 && inputHashes[16] == 1, "Provided data failed integrity checks");
+        require(inputAES[8] == 1 && inputHashes[12] == 1, "Provided data failed integrity checks");
         require(dataUpdateRequestIntVar[PBKVerifier][msg.sender][nonce][2] < block.timestamp,
         "Onboarding request rejected: time limit exceeded");
         require(inputAES[0] == inputHashes[0] && inputAES[1] == inputHashes[1] &&
         inputAES[2] == inputHashes[2] && inputAES[3] == inputHashes[3] &&
-        inputAES[4] == inputHashes[10] && inputAES[5] == inputHashes[11],
+        inputAES[4] == inputHashes[6] && inputAES[5] == inputHashes[7],
         "Proof rejected: diverging parameters submitted to different components");
         require(userSymmetricKeychain[msg.sender][0] == inputAES[4] && userSymmetricKeychain[msg.sender][1] == inputAES[5],
         "Invalid private symmetric key provided with proof");
         require(dataUpdateRequestIntVar[PBKVerifier][msg.sender][nonce][0] == inputAES[6] &&
         dataUpdateRequestIntVar[PBKVerifier][msg.sender][nonce][1] == inputAES[7],
         "Invalid hash of cleartext data provided");   
-        require(dataUpdateRequestIntVar[PBKVerifier][msg.sender][nonce][2] == inputHashes[12] &&
-        dataUpdateRequestIntVar[PBKVerifier][msg.sender][nonce][3] == inputHashes[13],
+        require(dataUpdateRequestIntVar[PBKVerifier][msg.sender][nonce][2] == inputHashes[8] &&
+        dataUpdateRequestIntVar[PBKVerifier][msg.sender][nonce][3] == inputHashes[9],
         "Invalid hash of request onboarded provided");
         if(onboardAES.verifyTx(proofAES, inputAES) && onboardHashes.verifyTx(proofHashes, inputHashes)){
                userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][0] = inputHashes[0];
                userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][1] = inputHashes[1];
                userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][2] = inputHashes[2];
                userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][3] = inputHashes[3];
-               userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][4] = inputHashes[14];
-               userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][5] = inputHashes[15];
+               userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][4] = inputHashes[10];
+               userDataSmartContract[msg.sender][inputHashes[4]][inputHashes[5]][5] = inputHashes[11];
                return true;
         }  
         return false;
@@ -224,14 +223,12 @@ contract Zaest {
     //users onboard data into IPFS through this function
     function onboardDataIPFS(address PBKVerifier, uint nonce, OnboardingAES.Verifier.Proof memory proofAES, 
                              uint[9] memory inputAES, OnboardingHashes.Verifier.Proof memory proofHashes, 
-                             uint[17] memory inputHashes, OnboardingIPFS.Verifier.Proof memory proofIPFS, 
+                             uint[13] memory inputHashes, OnboardingIPFS.Verifier.Proof memory proofIPFS, 
                              uint[13] memory inputIPFS) public{
         require(inputIPFS[12] == 1, "Provided data failed integrity checks");
         require(inputIPFS[0] == inputHashes[0] && inputIPFS[1] == inputHashes[1] &&
         inputIPFS[2] == inputHashes[2] && inputIPFS[3] == inputHashes[3] &&
-        inputIPFS[4] == inputHashes[4] && inputIPFS[5] == inputIPFS[5] &&
-        inputIPFS[6] == inputHashes[6] && inputIPFS[7] == inputIPFS[7] &&
-        inputIPFS[8] == inputHashes[8] && inputIPFS[9] == inputIPFS[9],
+        inputIPFS[4] == inputHashes[4] && inputIPFS[5] == inputIPFS[5],
         "Proof rejected: diverging parameters submitted to different components");
         if(onboardIPFS.verifyTx(proofIPFS, inputIPFS) && 
             onboardDataSmartContract(PBKVerifier, nonce, proofAES, inputAES, proofHashes, inputHashes)){
