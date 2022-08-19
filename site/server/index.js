@@ -4,6 +4,7 @@ const app = express();
 const cors = require('cors');
 const execSync = require('child_process').execSync;
 const fs = require('fs');
+const JSONBig = require('json-bigint');
 app.use(cors());
 const PORT = 3001;
 
@@ -68,9 +69,10 @@ app.get('/zokratesOnboardingHashes', function(req, res) {
     console.log(r);   
     console.log(proofCommandOutput);
 
-    let proof = JSON.parse(fs.readFileSync(proofLocation, 'utf8'));
-    console.log("proof index.js:" + JSON.stringify(proof));
-    res.send(JSON.parse(fs.readFileSync(proofLocation, 'utf8')));
+    let proof = JSONBig.stringify(JSONBig.parse(fs.readFileSync(proofLocation, 'utf8')));
+    console.log("proof index.js:" + proof);
+    res.setHeader('Content-Type', 'application/json');
+    res.send(proof);
 });
 
 app.get('/', (req, res) =>{

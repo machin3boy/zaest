@@ -24,21 +24,27 @@
   <el-button @click="killPython" class="m-3">Kill Python</el-button>
   <p class="mx-6"> Data received: {{ killPythonResponse }}</p> 
   <p class="mx-6 my-5"> </p>
+  <p class="mx-6"> ZoKrates response: {{ zokratesResponse }} </p>
+
 
 </template>
 
 <script setup>
+
 import { ref } from "vue";
 import SimpleCard from "./components/SimpleCard.vue";
 import InputsCard from "./components/InputsCard.vue";
+
+import JSONBig from 'json-bigint';
+import axios from 'axios';
 const CryptoJS = require('crypto-js');
 
-const axios = require("axios");
 const url = "http://localhost:3001";
 
 const AESresponse = ref("");
 const RSAkeysResponse = ref("");
 const RSAresponse = ref("");
+const zokratesResponse = ref('');
 
 //AES parameters
 const aesKey = ref("zaesttestkey1234");
@@ -159,30 +165,36 @@ async function generateOnboardingProofHashes(){
                      strToHex(d.dPrime.substring(32, 48)) + 
                      strToHex(d.dPrime.substring(48)) + 
                      a + strToHex(aesKey.value));
-  await axios.get(`${url}/zokratesOnboardingHashes`, { params: {
-    u:  strToBig(aesKey.value),
-    dA: strToBig(d.dPrime.substring(0, 16)),
-    dB: strToBig(d.dPrime.substring(16, 32)),
-    dC: strToBig(d.dPrime.substring(32, 48)),
-    dD: strToBig(d.dPrime.substring(48)),
-    up: strToBig(d.updateOp),
-    ar: strToBig(d.args),
-    vA: strToBig(d.variableRequested.substring(0, 16)),
-    vB: strToBig(d.variableRequested.substring(16)),
-    aA: hexToBig(aA),
-    aB: hexToBig(aB),
-    aC: hexToBig(aC),
-    aD: hexToBig(aD),
-    oA: hexToBig(hashStr(d.variableRequested + aesKey.value).substring(0,32)),
-    oB: hexToBig(hashStr(d.variableRequested + aesKey.value).substring(32)),
-    h_keyA: hexToBig(hashStr(aesKey.value).substring(0, 32)),
-    h_keyB: hexToBig(hashStr(aesKey.value).substring(32)),
-    h_ruA: hexToBig(hashStr(d.ru).substring(0, 32)),
-    h_ruB: hexToBig(hashStr(d.ru).substring(32)),
-    h_daA: hexToBig(h_da.substring(0, 32)),
-    h_daB: hexToBig(h_da.substring(32)),
-    }}).then((response) => {
-      zkSNARKsOnboarding.value.results['proof'] = JSON.stringify(response);
+  await axios.get(`${url}/zokratesOnboardingHashes`, 
+    { params: {
+      u:  strToBig(aesKey.value),
+      dA: strToBig(d.dPrime.substring(0, 16)),
+      dB: strToBig(d.dPrime.substring(16, 32)),
+      dC: strToBig(d.dPrime.substring(32, 48)),
+      dD: strToBig(d.dPrime.substring(48)),
+      up: strToBig(d.updateOp),
+      ar: strToBig(d.args),
+      vA: strToBig(d.variableRequested.substring(0, 16)),
+      vB: strToBig(d.variableRequested.substring(16)),
+      aA: hexToBig(aA),
+      aB: hexToBig(aB),
+      aC: hexToBig(aC),
+      aD: hexToBig(aD),
+      oA: hexToBig(hashStr(d.variableRequested + aesKey.value).substring(0,32)),
+      oB: hexToBig(hashStr(d.variableRequested + aesKey.value).substring(32)),
+      h_keyA: hexToBig(hashStr(aesKey.value).substring(0, 32)),
+      h_keyB: hexToBig(hashStr(aesKey.value).substring(32)),
+      h_ruA: hexToBig(hashStr(d.ru).substring(0, 32)),
+      h_ruB: hexToBig(hashStr(d.ru).substring(32)),
+      h_daA: hexToBig(h_da.substring(0, 32)),
+      h_daB: hexToBig(h_da.substring(32)),
+      }
+    },
+    {
+      transformResponse: [data => data] 
+    }).then((res) => {
+      zkSNARKsOnboarding.value.results['proof'] = JSON.stringify(res.data);
+      zokratesResponse.value = JSON.stringify(res.data);
     });
     return zkSNARKsOnboarding.value.results['proof'];
 }
