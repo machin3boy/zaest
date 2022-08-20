@@ -4,7 +4,6 @@ const app = express();
 const cors = require('cors');
 const execSync = require('child_process').execSync;
 const fs = require('fs');
-const JSONBig = require('json-bigint');
 app.use(cors());
 const PORT = 3001;
 
@@ -63,13 +62,32 @@ app.get('/zokratesOnboardingHashes', function(req, res) {
                      " " + r.oA + " " + r.oB + " " + r.h_keyA + " " + r.h_keyB + " " + 
                      r.h_ruA + " " + r.h_ruB + " " + r.h_daA + " " + r.h_daB + 
                      "; zokrates generate-proof; cd $current_dir";                 
-    const proofLocation = "../../ZoKrates/onboarding_hashes_params/proof.json"
+    const proofLocation = "../../ZoKrates/onboarding_hashes_params/proof.json";
     const proofCommandOutput = execSync(proofCommand).toString();
     
     console.log(r);   
     console.log(proofCommandOutput);
 
-    let proof = JSONBig.stringify(JSONBig.parse(fs.readFileSync(proofLocation, 'utf8')));
+    let proof = JSON.stringify(JSON.parse(fs.readFileSync(proofLocation, 'utf8')));
+    console.log("proof index.js:" + proof);
+    res.setHeader('Content-Type', 'application/json');
+    res.send(proof);
+});
+
+app.get('/zokratesOnboardingAES', function(req, res) {
+    const r = req.query;
+    const proofCommand = "current_dir=$PWD; cd ../../ZoKrates/onboarding_aes_params; " + 
+                         "zokrates compute-witness -a " + r.u + " " + r.dA + " " + r.dB + 
+                         " " + r.dC + " " + r.dD + " " + r.aA + " " + r.aB + " " + r.aC + 
+                         " " + r.aD + " " + r.h_keyA + " " + r.h_keyB + " " + r.h_dpA + 
+                         " " + r.h_dpB + "; zokrates generate-proof; cd $current_dir";
+    const proofLocation = "../../ZoKrates/onboarding_aes_params/proof.json";
+    const proofCommandOutput = execSync(proofCommand).toString();
+
+    console.log(r);
+    console.log(proofCommandOutput);
+
+    let proof = JSON.stringify(JSON.parse(fs.readFileSync(proofLocation, 'utf8')));
     console.log("proof index.js:" + proof);
     res.setHeader('Content-Type', 'application/json');
     res.send(proof);
@@ -79,6 +97,26 @@ app.get('/', (req, res) =>{
     res.send("Server is live");
     console.log("Server is live");
 })
+
+
+app.get('/zokratesOnboardingIPFS', function(req, res) {
+    const r = req.query;
+    const proofCommand = "current_dir=$PWD; cd ../../ZoKrates/onboarding_ipfs_params; " + 
+                         "zokrates compute-witness -a " + r.aA + " " + r.aB + " " + r.aC + 
+                         " " + r.aD + " " + r.oA + " " + r.oB + " " + r.cA + " " + r.cB + 
+                         " " + r.cC + " " + r.cD + " " + r.h_ipfs_d0 + " " + r.h_ipfs_d1 + 
+                         "; zokrates generate-proof; cd $current_dir";
+    const proofLocation = "../../ZoKrates/onboarding_ipfs_params/proof.json";
+    const proofCommandOutput = execSync(proofCommand).toString();
+
+    console.log(r);
+    console.log(proofCommandOutput);
+
+    let proof = JSON.stringify(JSON.parse(fs.readFileSync(proofLocation, 'utf8')));
+    console.log("proof index.js:" + proof);
+    res.setHeader('Content-Type', 'application/json');
+    res.send(proof);
+});
 
 app.listen(PORT, () => {
     console.log(`App is listening at http://localhost:${PORT}`)

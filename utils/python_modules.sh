@@ -1,2 +1,2 @@
 pip uninstall PyCrypto
-pip3 install -U PyCryptodome
+pip install -U PyCryptodome

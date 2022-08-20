@@ -1,32 +1,41 @@
 <template>
-  <title>Backend Experiments</title>
-  <InputsCard :fields="dataUpdateFields"
-              @updateCard="dataUpdateChildInput"
-              @generateResults="dataUpdateGenerateResults" class="mt-5 mb-3 mx-3"/>
-  <SimpleCard :fields="dataUpdateFields" class="m-3" />
-  <SimpleCard :fields="updateRequestDecrypted" class="m-3"
-              @buttonClick="decryptUpdateRequest"/>
-  <SimpleCard :fields="zkSNARKsOnboarding" class="m-3"
-              @buttonClick="generateOnboardingProofHashes" />
+  <div class="flex grow flex-col">
+    <Menu />
 
-  <el-button @click="fetchAESData" class="m-3">Fetch AES Data</el-button>
-  <p class="mx-6"> Data retrieved: {{ AESresponse }}</p>
-  <p class="mx-6"> AES data: {{ aesData }}</p>
-  <p class="mx-6"> AES function: {{ aesFunction }}</p>
-  <el-button @click="fetchRSAKeys" class="m-3">Fetch RSA Keys</el-button>
-  <p class="mx-6"> Data retrieved: {{ RSAkeysResponse }}</p>
-  <p class="mx-6"> PVK: {{ rsaPrivateKey }}</p>
-  <p class="mx-6"> PBK: {{ rsaPublicKey }}</p>
-  <el-button @click="fetchRSAData" class="m-3">Fetch RSA Data</el-button>
-  <p class="mx-6"> Data retrieved: {{ RSAresponse }}</p> 
-  <p class="mx-6"> RSA data: {{ rsaData }}</p>
-  <p class="mx-6"> RSA function: {{ rsaFunction }}</p>
-  <el-button @click="killPython" class="m-3">Kill Python</el-button>
-  <p class="mx-6"> Data received: {{ killPythonResponse }}</p> 
-  <p class="mx-6 my-5"> </p>
-  <p class="mx-6"> ZoKrates response: {{ zokratesResponse }} </p>
+    <div class="flex mt-10 p-10 flex-wrap">
+      <div class="flex flex-col basis-2/3 grow justify-center px-10 mb-10">
+        <h1 class="font-bold text-5xl">Welcome to Zaest</h1>
+        <p class="mt-5 text-xl">Lorem ipsum dolor sit amet, consectetur adipisci 
+          elit, sed eiusmod tempor incidunt ut labore et dolore 
+          magna aliqua. Ut enim ad minim veniam, quis nostrum
+          exercitationem ullam corporis suscipit laboriosam, 
+          nisi ut aliquid ex ea commodi consequatur. Quis 
+          aute iure reprehenderit in voluptate velit esse. 
+        </p>
+      </div>
+      <div class="flex basis-1/3 grow justify-center px-10 min-w-fit mb-10">
+        <img src="../src/assets/lemon.png"/>
+      </div>
+    </div>
 
+    <div class="flex px-10 flex-wrap-reverse">
+      <div class="flex basis-1/3 grow justify-center px-10 min-w-fit">
+        <img src="../src/assets/lemon.png"/>
+      </div>
+      <div class="flex flex-col basis-2/3 grow justify-center px-10 mb-10">
+        <h1 class="font-bold text-5xl">Welcome to Zaest</h1>
+        <p class="mt-5 text-xl">Lorem ipsum dolor sit amet, consectetur adipisci 
+          elit, sed eiusmod tempor incidunt ut labore et dolore 
+          magna aliqua. Ut enim ad minim veniam, quis nostrum
+          exercitationem ullam corporis suscipit laboriosam, 
+          nisi ut aliquid ex ea commodi consequatur. Quis 
+          aute iure reprehenderit in voluptate velit esse. 
+        </p>
+      </div>
+    </div>
 
+    <el-backtop :right="30" :bottom="30" />
+  </div>
 </template>
 
 <script setup>
@@ -34,8 +43,8 @@
 import { ref } from "vue";
 import SimpleCard from "./components/SimpleCard.vue";
 import InputsCard from "./components/InputsCard.vue";
+import Menu from "./components/Menu.vue";
 
-import JSONBig from 'json-bigint';
 import axios from 'axios';
 const CryptoJS = require('crypto-js');
 
@@ -44,7 +53,9 @@ const url = "http://localhost:3001";
 const AESresponse = ref("");
 const RSAkeysResponse = ref("");
 const RSAresponse = ref("");
-const zokratesResponse = ref('');
+const zOnboardingHashesResponse = ref('');
+const zOnboardingAESResponse = ref('');
+const zOnboardingIPFSResponse = ref('');
 
 //AES parameters
 const aesKey = ref("zaesttestkey1234");
@@ -91,10 +102,15 @@ const updateRequestDecrypted = ref({
   "results": {
     "k": "",
     "ru": "",
+    "h_ru_0": "",
+    "h_ru_1": "",
     "dPrime": "",
+    "h_dp_0": "",
+    "h_dp_1": "",
     "updateOp": "",
     "args": "",
     "variableRequested": "",
+    "c": "lasdfjpoasidjfsapodfijasdoifjaspdofijadsjasdpofijasdojfasdj",
     "tLimit": "",
   }
 })
@@ -103,7 +119,9 @@ const zkSNARKsOnboarding = ref({
   "title results": "zk-SNARKs proof",
   "button text": "generate zk-SNARKs proof",
   "results": {
-    "proof": "",
+    "proof hashes": "",
+    "proof AES": "",
+    "proof IPFS": "",
   }
 })
 
@@ -116,7 +134,11 @@ async function decryptUpdateRequest(){
   updateRequestDecrypted.value.results["k"] = await performRSA(rsaPrivateKey.value, d.kPrime, 'decrypt');
   const ru = await performAES(aesKey.value, d.e_ru, 'decrypt');
   updateRequestDecrypted.value.results["ru"] = ru
+  updateRequestDecrypted.value.results['h_ru_0'] = d.h_ru_0;
+  updateRequestDecrypted.value.results['h_ru_1'] = d.h_ru_1;
   updateRequestDecrypted.value.results["dPrime"] = ru.substring(0, 64);
+  updateRequestDecrypted.value.results['h_dp_0'] = d.h_dp_0;
+  updateRequestDecrypted.value.results['h_dp_1'] = d.h_dp_1;
   updateRequestDecrypted.value.results["updateOp"] = ru.substring(64, 80);
   updateRequestDecrypted.value.results["args"] = ru.substring(80, 96);
   updateRequestDecrypted.value.results["variableRequested"] = ru.substring(96);
@@ -193,10 +215,91 @@ async function generateOnboardingProofHashes(){
     {
       transformResponse: [data => data] 
     }).then((res) => {
-      zkSNARKsOnboarding.value.results['proof'] = JSON.stringify(res.data);
-      zokratesResponse.value = JSON.stringify(res.data);
+      zkSNARKsOnboarding.value.results['proof hahes'] = JSON.stringify(res.data);
+      zOnboardingHashesResponse.value = JSON.stringify(res.data);
     });
-    return zkSNARKsOnboarding.value.results['proof'];
+    return zkSNARKsOnboarding.value.results['proof hashes'];
+}
+
+async function generateOnboardingProofAES(){
+  const d = updateRequestDecrypted.value.results;
+  let a = await performAES(aesKey.value, d.dPrime, 'encrypt')
+  a = a.replace(/\s/g, '');
+  let aA = a.substring(0,32);
+  let aB = a.substring(32,64);
+  let aC = a.substring(64,96);
+  let aD = a.substring(96, 128);
+  await axios.get(`${url}/zokratesOnboardingAES`, 
+    { params: {
+      u:  strToBig(aesKey.value),
+      dA: strToBig(d.dPrime.substring(0, 16)),
+      dB: strToBig(d.dPrime.substring(16, 32)),
+      dC: strToBig(d.dPrime.substring(32, 48)),
+      dD: strToBig(d.dPrime.substring(48)),
+      aA: hexToBig(aA),
+      aB: hexToBig(aB),
+      aC: hexToBig(aC),
+      aD: hexToBig(aD),
+      h_keyA: hexToBig(hashStr(aesKey.value).substring(0, 32)),
+      h_keyB: hexToBig(hashStr(aesKey.value).substring(32)),
+      h_dpA: hexToBig(hashStr(d.dPrime).substring(0,32)),
+      h_dpB: hexToBig(hashStr(d.dPrime).substring(32)),
+      }
+    },
+    {
+      transformResponse: [data => data] 
+    }).then((res) => {
+      zkSNARKsOnboarding.value.results['proof AES'] = JSON.stringify(res.data);
+      zOnboardingAESResponse.value = JSON.stringify(res.data);
+    });
+    return zkSNARKsOnboarding.value.results['proof AES'];
+}
+
+async function generateOnboardingProofIPFS(){
+  const d = updateRequestDecrypted.value.results;
+  let a = await performAES(aesKey.value, d.dPrime, 'encrypt')
+  a = a.replace(/\s/g, '');
+  let aA =  a.substring(0,32);
+  let aB =  a.substring(32,64);
+  let aC =  a.substring(64,96);
+  let aD =  a.substring(96, 128);
+  let oA =  hashStr(d.variableRequested + aesKey.value).substring(0,32);
+  let oB =  hashStr(d.variableRequested + aesKey.value).substring(32);
+  let cA =  d.c.substring(0,16);
+  let cB =  d.c.substring(16,32);
+  let cC =  d.c.substring(32,48);
+  let cD =  d.c.substring(48) + "_".repeat(64-d.c.length);
+  let h_ipfs_d = hashHex(a + oA + oB + strToHex(cA+cB+cC+cD)); 
+                         
+  await axios.get(`${url}/zokratesOnboardingIPFS`, 
+    { params: {
+      aA: hexToBig(aA),
+      aB: hexToBig(aB),
+      aC: hexToBig(aC),
+      aD: hexToBig(aD),
+      oA: hexToBig(oA),
+      oB: hexToBig(oB),
+      cA: strToBig(cA),
+      cB: strToBig(cB),
+      cC: strToBig(cC),
+      cD: strToBig(cD),
+      h_ipfs_d0: hexToBig(h_ipfs_d.substring(0,32)),
+      h_ipfs_d1: hexToBig(h_ipfs_d.substring(32)),
+      }
+    },
+    {
+      transformResponse: [data => data] 
+    }).then((res) => {
+      zkSNARKsOnboarding.value.results['proof IPFS'] = JSON.stringify(res.data);
+      zOnboardingIPFSResponse.value = JSON.stringify(res.data);
+    });
+    return zkSNARKsOnboarding.value.results['proof IPFS'];
+}
+
+function generateOnboardingProof(){
+  generateOnboardingProofHashes();
+  generateOnboardingProofAES();
+  generateOnboardingProofIPFS();
 }
 
 async function performAES(aesKeyParam, aesDataParam, aesFunctionParam) {
