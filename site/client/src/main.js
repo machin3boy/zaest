@@ -7,5 +7,7 @@ import App from './App.vue'
 
 const app = createApp(App)
 
+app.config.globalProperties.window = window
+
 app.use(ElementPlus).use(Particles)
 app.mount('#app')
