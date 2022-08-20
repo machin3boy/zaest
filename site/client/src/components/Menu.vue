@@ -22,20 +22,23 @@
       <el-menu-item index="3-4">View Data</el-menu-item>
     </el-sub-menu>
     <el-menu-item index="4">About</el-menu-item>    
-    <button type="button" class="inline-block px-10 py-3 mr-5 border-2 
+      <button type="button" class="inline-block px-10 py-3 mr-5 border-2 
                                  border-yellow-400 text-yellow-400 
                                  font-bold text-xs leading-tight 
                                  uppercase rounded hover:bg-white 
                                  hover:bg-opacity-5 focus:outline-none 
                                  focus:ring-0 transition duration-150 
-                                 ease-in-out" style="margin-left: auto;">
-    Connect Wallet</button> 
+                                 ease-in-out" style="margin-left: auto;"
+      @click="$emit('connect')">
+      {{ connectionStatus }} </button> 
   </el-menu>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 const activeIndex = ref('1')
+defineProps(['connectionStatus'])
+defineEmits(['connect']);
 const handleSelect = (key, keyPath) => {
   console.log(key, keyPath)
 }

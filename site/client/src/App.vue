@@ -122,7 +122,7 @@
             }"
         />
     </div>
-    <Menu />
+    <Menu :connectionStatus="connectionStatus" @connect="connectMetamask" />
       <div class="flex mt-10 p-10 flex-wrap">
         <div class="flex flex-col basis-2/3 grow justify-center px-10 mb-10">
           <h1 class="font-bold text-5xl">Welcome to Zaest</h1>
@@ -154,6 +154,7 @@
           </p>
         </div>
       </div>    
+
     <el-backtop :right="30" :bottom="30" />
   </div>
 </template>
@@ -166,6 +167,10 @@ import InputsCard from "./components/InputsCard.vue";
 import Menu from "./components/Menu.vue";
 import axios from 'axios';
 import { loadFull } from "tsparticles";
+import InputField from "./components/InputField.vue";
+
+import Web3 from 'web3';
+const connectionStatus = ref('Connect Wallet');
 
 const particlesInit = async (engine) => {
     await loadFull(engine);
@@ -174,6 +179,19 @@ const particlesInit = async (engine) => {
 const particlesLoaded = async (container) => {
     console.log("Particles container loaded", container);
 }
+
+async function connectMetamask(){
+  connectionStatus.value = 'processing';
+  if (window.ethereum) {
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+    const account = accounts[0];
+    connectionStatus.value = 'wallet connected';
+  }
+  else {
+    connectionStatus.value = 'Metamask Required';
+  }
+}
+
 
 const CryptoJS = require('crypto-js');
 
