@@ -4,6 +4,7 @@
     <Menu :connectionStatus="connectionStatus" @connect="connectMetamask" />
     <component :is="currentView" />
     <HomePage />
+    <Footer />
     <el-backtop :right="30" :bottom="30" />
   </div>
 </template>
@@ -22,6 +23,7 @@ import UserData from "./components/UserData.vue";
 import UserPage from "./components/UserPage.vue";
 import VerifierPage from "./components/VerifierPage.vue";
 import SecondaryKeys from "./components/SecondaryKeys.vue";
+import Footer from "./components/Footer.vue";
 
 import Web3 from 'web3';
 import axios from 'axios';
