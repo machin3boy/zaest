@@ -22,8 +22,14 @@
       <el-menu-item index="3-4">View Data</el-menu-item>
     </el-sub-menu>
     <el-menu-item index="4">About</el-menu-item>    
-    <el-button class="mr-10 text-white px-10 py-3" style="margin-left: auto;">Connect Wallet</el-button>
-    
+    <button type="button" class="inline-block px-10 py-3 mr-5 border-2 
+                                 border-yellow-400 text-yellow-400 
+                                 font-bold text-xs leading-tight 
+                                 uppercase rounded hover:bg-white 
+                                 hover:bg-opacity-5 focus:outline-none 
+                                 focus:ring-0 transition duration-150 
+                                 ease-in-out" style="margin-left: auto;">
+    Connect Wallet</button> 
   </el-menu>
 </template>
 
