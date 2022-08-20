@@ -1,39 +1,159 @@
 <template>
-  <div class="flex grow flex-col">
+  <div class="flex grow flex-col bg-stone-900 text-white" > 
+    <div id="app">
+      <Particles
+          id="tsparticles"
+          :particlesInit="particlesInit"
+          :particlesLoaded="particlesLoaded"
+          :options="
+          { 
+              particles: {
+                number: {
+                  value: 50,
+                  density: {
+                    enable: true,
+                    value_area: 800
+                  }
+                },
+                backgroundMode: {
+                      enable: true,
+                      zIndex: -1
+                },
+                color: {
+                  value: '#fef08a'
+                },
+                shape: {
+                  type: 'circle',
+                  stroke: {
+                    width: 0,
+                    color: '#000000'
+                  },
+                  polygon: {
+                    nb_sides: 5
+                  },
+                  image: {
+                    src: 'img/github.svg',
+                    width: 100,
+                    height: 100
+                  }
+                },
+                opacity: {
+                  value: 0.2,
+                  random: false,
+                  anim: {
+                    enable: false,
+                    speed: 1,
+                    opacity_min: 0.1,
+                    sync: false
+                  }
+                },
+                size: {
+                  value: 3,
+                  random: true,
+                  anim: {
+                    enable: false,
+                    speed: 40,
+                    size_min: 0.1,
+                    sync: false
+                  }
+                },
+                line_linked: {
+                  enable: true,
+                  distance: 150,
+                  color: 'fef08a',
+                  opacity: 0.3,
+                  width: 1
+                },
+                move: {
+                  enable: true,
+                  speed: 0.3,
+                  direction: 'none',
+                  random: false,
+                  straight: false,
+                  out_mode: 'out',
+                  bounce: false,
+                  attract: {
+                    enable: false,
+                    rotateX: 600,
+                    rotateY: 1200
+                  }
+                }
+              },
+              interactivity: {
+                detect_on: 'canvas',
+                events: {
+                  onhover: {
+                    enable: false,
+                    mode: 'repulse'
+                  },
+                  onclick: {
+                    enable: false,
+                    mode: 'push'
+                  },
+                  resize: true
+                },
+                modes: {
+                  grab: {
+                    distance: 400,
+                    line_linked: {
+                      opacity: 1
+                    }
+                  },
+                  bubble: {
+                    distance: 400,
+                    size: 40,
+                    duration: 2,
+                    opacity: 8,
+                    speed: 3
+                  },
+                  repulse: {
+                    distance: 200,
+                    duration: 0.4
+                  },
+                  push: {
+                    particles_nb: 4
+                  },
+                  remove: {
+                    particles_nb: 2
+                  }
+                }
+              },
+              retina_detect: true
+            }"
+        />
+    </div>
     <Menu />
+      <div class="flex mt-10 p-10 flex-wrap">
+        <div class="flex flex-col basis-2/3 grow justify-center px-10 mb-10">
+          <h1 class="font-bold text-5xl">Welcome to Zaest</h1>
+          <p class="mt-5 text-xl">Lorem ipsum dolor sit amet, consectetur adipisci 
+            elit, sed eiusmod tempor incidunt ut labore et dolore 
+            magna aliqua. Ut enim ad minim veniam, quis nostrum
+            exercitationem ullam corporis suscipit laboriosam, 
+            nisi ut aliquid ex ea commodi consequatur. Quis 
+            aute iure reprehenderit in voluptate velit esse. 
+          </p>
+        </div>
+        <div class="flex basis-1/3 grow justify-center px-10 min-w-fit mb-10">
+          <img src="../src/assets/lemon.png"/>
+        </div>
+      </div>
 
-    <div class="flex mt-10 p-10 flex-wrap">
-      <div class="flex flex-col basis-2/3 grow justify-center px-10 mb-10">
-        <h1 class="font-bold text-5xl">Welcome to Zaest</h1>
-        <p class="mt-5 text-xl">Lorem ipsum dolor sit amet, consectetur adipisci 
-          elit, sed eiusmod tempor incidunt ut labore et dolore 
-          magna aliqua. Ut enim ad minim veniam, quis nostrum
-          exercitationem ullam corporis suscipit laboriosam, 
-          nisi ut aliquid ex ea commodi consequatur. Quis 
-          aute iure reprehenderit in voluptate velit esse. 
-        </p>
-      </div>
-      <div class="flex basis-1/3 grow justify-center px-10 min-w-fit mb-10">
-        <img src="../src/assets/lemon.png"/>
-      </div>
-    </div>
-
-    <div class="flex px-10 flex-wrap-reverse">
-      <div class="flex basis-1/3 grow justify-center px-10 min-w-fit">
-        <img src="../src/assets/lemon.png"/>
-      </div>
-      <div class="flex flex-col basis-2/3 grow justify-center px-10 mb-10">
-        <h1 class="font-bold text-5xl">Welcome to Zaest</h1>
-        <p class="mt-5 text-xl">Lorem ipsum dolor sit amet, consectetur adipisci 
-          elit, sed eiusmod tempor incidunt ut labore et dolore 
-          magna aliqua. Ut enim ad minim veniam, quis nostrum
-          exercitationem ullam corporis suscipit laboriosam, 
-          nisi ut aliquid ex ea commodi consequatur. Quis 
-          aute iure reprehenderit in voluptate velit esse. 
-        </p>
-      </div>
-    </div>
-
+      <div class="flex px-10 flex-wrap-reverse">
+        <div class="flex basis-1/3 grow justify-center px-10 min-w-fit">
+          <img src="../src/assets/lemon.png"/>
+        </div>
+        <div class="flex flex-col basis-2/3 grow justify-center px-10 mb-10">
+          <h1 class="font-bold text-5xl">Welcome to Zaest</h1>
+          <p class="mt-5 text-xl">Lorem ipsum dolor sit amet, consectetur adipisci 
+            elit, sed eiusmod tempor incidunt ut labore et dolore 
+            magna aliqua. Ut enim ad minim veniam, quis nostrum
+            exercitationem ullam corporis suscipit laboriosam, 
+            nisi ut aliquid ex ea commodi consequatur. Quis 
+            aute iure reprehenderit in voluptate velit esse. 
+          </p>
+        </div>
+      </div>    
     <el-backtop :right="30" :bottom="30" />
   </div>
 </template>
@@ -44,8 +164,17 @@ import { ref } from "vue";
 import SimpleCard from "./components/SimpleCard.vue";
 import InputsCard from "./components/InputsCard.vue";
 import Menu from "./components/Menu.vue";
-
 import axios from 'axios';
+import { loadFull } from "tsparticles";
+
+const particlesInit = async (engine) => {
+    await loadFull(engine);
+}
+
+const particlesLoaded = async (container) => {
+    console.log("Particles container loaded", container);
+}
+
 const CryptoJS = require('crypto-js');
 
 const url = "http://localhost:3001";
