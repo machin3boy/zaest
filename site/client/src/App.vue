@@ -1,11 +1,10 @@
 <template>
-  <div class="flex grow flex-col bg-stone-900 text-white" > 
-    <ParticlesBackground />
-    <Menu :connectionStatus="connectionStatus" @connect="connectMetamask" />
-    <component :is="currentView" />
-    <HomePage />
-    <Footer />
+  <div class="flex flex-col bg-stone-900 text-white min-h-screen" > 
+    <ParticlesBackground v-if="currentPath==='#/'||currentPath==='#/about'"/>
+    <Menu :connectionStatus="connectionStatus" @connect="connectMetamask"/>
+    <component :is="currentView" :props="propsToPass()" class="flex grow"/>
     <el-backtop :right="30" :bottom="30" />
+    <Footer />
   </div>
 </template>
 
@@ -63,6 +62,48 @@ async function connectMetamask(){
     connectionStatus.value = 'Metamask Required';
   }
 }
+
+const propsToPass = () => {
+  if(currentPath.value==='#/secondarykeys')
+    return secondaryKeysCards;
+  return;
+}
+
+const secondaryKeysCards = ref([
+{
+  "title": "AES keys",
+  "inputs": {
+    "input AES key": ""
+  },
+  "texts": {
+    "generated AES key": "",
+  },
+  "buttons": [
+    "generate AES key",
+    "use key for dApp",
+    "onboard key to smart contract",
+  ]
+},
+{
+  "title": "RSA keys",
+  "inputs": {
+    "input RSA public key (PBK)": "",
+    "input RSA private key (PVK)": "",
+  },
+  "texts": {
+    "generated RSA public key": "",
+    "generated RSA private key": "",
+  },
+  "buttons": [
+    "generate RSA keys",
+    "use keys for dApp",
+    "onboard PBK to smart contract",
+  ]
+},
+]);
+
+const aesKeys = ref([]);
+const rsaKeys = ref([]);
 
 </script>
 

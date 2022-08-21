@@ -1,5 +1,5 @@
 <template>
-  <el-input v-model="input" :placeholder="value" @input="$emit('updateInput', input)" />
+  <el-input v-model="input" :placeholder="value" @input="$emit('updateInput', input)" class="bg-blue" />
 </template>
 
 <script setup>
