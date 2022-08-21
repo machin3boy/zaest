@@ -12,21 +12,21 @@
             + "  ...  " + value.substring(value.length-10)}}
         </p>
         <p v-if="value.length!=0">
-            {{ 'value of ' + key + ": " + value }}
+            {{ key + ": " + value }}
         </p>
         <p v-else>
-            {{ 'value of ' + key + ": " }}
+            {{ key + ": " }}
         </p>
       </div>
     </div>
     <div v-for="(value, key) in fields['inputs']">
       <div class="my-2">
         <p class="mb-1">{{ 'input ' + key + ":" }}</p>
-        <InputField @updateInput="$emit('updateCard', key, $event)" :value="value" class="mb-1"/>
+        <InputField @updateInput="(...args)=>$emit('updateCard', key, ...args)" :value="value" class="mb-1"/>
       </div>
     </div>
     <div v-for="button in fields['buttons']">
-      <div class="my-2">
+      <div class="my-3">
         <button type="button" class="inline-block px-10 py-3 mr-5 border-2 
                                     border-yellow-400 text-yellow-400 
                                     font-bold text-xs leading-tight 
@@ -34,7 +34,7 @@
                                     hover:bg-opacity-5 focus:outline-none 
                                     focus:ring-0 transition duration-150 
                                     ease-in-out" style="margin-left: auto;"
-        @click="$emit('buttonClick')">
+        @click="$emit('buttonClick', button)">
         {{ button }} </button> 
       </div>
     </div>

@@ -1,6 +1,6 @@
 const CryptoJS = require('crypto-js');
 
-function oneTimeKey(length) {
+export function oneTimeKey(length) {
     let result           = '';
     let characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let charactersLength = characters.length;
@@ -10,35 +10,35 @@ function oneTimeKey(length) {
 return result;
 }
 
-function hashHex(hexstr) { 
+export function hashHex(hexstr) { 
     return CryptoJS.SHA256(CryptoJS.enc.Hex.parse(hexstr)).toString();
 }
 
-function hashStr(string){
+export function hashStr(string){
     return CryptoJS.SHA256(string).toString();
 }
 
-function hexToBig(num) {
+export function hexToBig(num) {
     return BigInt('0x'+num);
 }
 
-function bigToHex(num) {    
+export function bigToHex(num) {    
     return BigInt(num).toString(16)
 }
 
-function strToHex(s){
+export function strToHex(s){
 return bigToHex(strToBig(s));
 }
 
-function strToU8arr(str) {
+export function strToU8arr(str) {
     return new TextEncoder('utf-8').encode(str)
 }
 
-function u8arrToStr(u8arr) {
+export function u8arrToStr(u8arr) {
     return new TextDecoder('utf-7').decode(u8arr)
 }
 
-function bigToU8arr(big) {
+export function bigToU8arr(big) {
     const big0 = BigInt(0)
     const big1 = BigInt(1)
     const big8 = BigInt(8)
@@ -63,7 +63,7 @@ function bigToU8arr(big) {
     return u8
 }
 
-function u8arrToBig(buf) {
+export function u8arrToBig(buf) {
     let hex = [];
     let u8 = Uint8Array.from(buf);
     u8.forEach(function (i) {
@@ -74,7 +74,7 @@ function u8arrToBig(buf) {
     return BigInt('0x' + hex.join(''));
 }
 
-function u32arrToHex(u32Arr) {
+export function u32arrToHex(u32Arr) {
     let hex = [];
     let u32 = Uint32Array.from(u32Arr)
     u32.forEach(function (i) {
@@ -84,11 +84,11 @@ function u32arrToHex(u32Arr) {
     return '0x' + hex.join('');
 }
 
-function strToBig(str) {
+export function strToBig(str) {
     return u8arrToBig(strToU8arr(str));
 }
 
-function bigToStr(big) {
+export function bigToStr(big) {
     return u8arrToStr(bigToU8arr(big));
 }
 
