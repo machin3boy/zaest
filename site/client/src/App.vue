@@ -18,6 +18,9 @@
     <p class="text-2xl">
         {{aesKeys}}
     </p>
+    <p class="text-2xl">
+        {{rsaKeys}}
+    </p>
     <el-backtop :right="30" :bottom="30" />
     <Footer />
   </div>
@@ -145,7 +148,7 @@ const handleActionAES = (...args) => {
   }
   if(args[0]==='use key for dApp'){
     storeAESkey();
-    notification("Secondary Keys", "Your key was successfully onboarded");
+    notification("Secondary Keys", "Your AES key was onboarded successfully");
   }
   if(args[0]==='onboard key to smart contract'){
     let key = aesKeys.value.
@@ -165,6 +168,34 @@ const handleActionAES = (...args) => {
         console.log("Hash of the transaction: " + res)
       })
   }
+}
+
+const handleActionRSA = async (...args) => {
+  if(args[0]==='generate RSA keys'){
+    const keys =  await axios.get(`${url}/rsaKeys`).then((response) =>
+      [response['data'][0].substring(5), response['data'][1].substring(5)]); 
+    secondaryKeysCards.value[1].texts["generated RSA private key"] = keys[0];
+    secondaryKeysCards.value[1].texts["generated RSA public key"] = keys[1];
+  }
+  if(args[0]==='use keys for dApp'){
+    storeRSAkeys();
+    notification("Secondary Keys", "Your RSA keys were onboarded successfully");
+  }
+  if(args[0]==='onboard PBK to smart contract'){
+    let key = rsaKeys.value.
+              filter((x) => x.address === accountAddress.value)
+              [0].rsaPBK;
+    zaestContract.
+      methods.
+      onboardAsymmetricKey(key).
+      send({ from: accountAddress.value }, function (err, res) {
+        if (err) {
+          console.log("An error occured", err)      
+          return
+        }
+        console.log("Hash of the transaction: " + res)
+      })
+  }      
 }
 
 const storeAESkey = () => {
@@ -191,7 +222,7 @@ const storeRSAkeys = () => {
 const notification = (title, message) => {
   ElNotification({
     title: title,
-    message: h('i', { style: 'color: teal' }, message),
+    message: h('i', { style: 'color: black' }, message),
   })
 }
 

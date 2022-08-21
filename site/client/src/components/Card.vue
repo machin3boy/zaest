@@ -7,12 +7,18 @@
     </template>
     <div v-for="(value, key) in fields['texts']" class="my-1">
       <div class="my-2">
-        <p v-if="value.length>24">
+        <p v-if="value.length>24 && value.substring(0,12)!=='b\'-----BEGIN'">
             {{ key + ": " + value.substring(0,10)
             + "  ...  " + value.substring(value.length-10)}}
         </p>
-        <p v-if="value.length!=0">
+        <p v-else-if="value.length!=0 && value.length<=24">
             {{ key + ": " + value }}
+        </p>
+        <p v-else-if="value.substring(0,30)==='b\'-----BEGIN PUBLIC KEY-----\\n'">
+            {{ key + ": " + value.substring(30,50) + "..." }}
+        </p>
+        <p v-else-if="value.substring(0,35)==='b\'-----BEGIN RSA PRIVATE KEY-----\\n'">
+            {{ key + ": " + value.substring(35,55) + "..." }}
         </p>
         <p v-else>
             {{ key + ": " }}
