@@ -631,32 +631,32 @@ const handleUserProof = async (...args) => {
   const button = args[1];
   if(button==='generate ZKP for smart contract'){
     if(i === 0){
-      let res = generateOnboardingProofHashes();
+      let res = await generateOnboardingProofHashes();
       console.log(res);
-      let res2 = generateOnboardingProofAES();
+      let res2 = await generateOnboardingProofAES();
       console.log(res2);
       notification("ZKP notification", "Your proofs are ready");
     }
     if(i === 1){
-      let res = generateOwnershipProofHashes();
+      let res = await generateOwnershipProofHashes();
       console.log(res);
       notification("ZKP notification", "Your proofs are ready");
     }
   }
   if(button==='generate ZKP for smart contract & IPFS'){
     if(i===0){
-      let res = generateOnboardingProofHashes();
+      let res = await generateOnboardingProofHashes();
       console.log(res);
-      let res2 = generateOnboardingProofAES();
+      let res2 = await generateOnboardingProofAES();
       console.log(res2);
-      let res3 = generateOnboardingProofIPFS();
+      let res3 = await generateOnboardingProofIPFS();
       console.log(res3);
       notification("ZKP notification", "Your proofs are ready");
     }
     if(i===1){
-      let res = generateOwnershipProofHashes();
+      let res = await generateOwnershipProofHashes();
       console.log(res);
-      let res2 = generateOwnershipProofIPFS();
+      let res2 = await generateOwnershipProofIPFS();
       console.log(res2);
       notification("ZKP notification", "Your proofs are ready");
     }
