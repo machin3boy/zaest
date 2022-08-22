@@ -15,14 +15,17 @@
             </div>
         </div>
 
-        <div v-if="action.length>0&&action[2].active!=='false'">
+        <div v-if="action.length>0&&action[1].active!=='false'">
             <h1 class="text-3xl my-10 ml-10">
             Onboard New Data Or Prove Ownership:
             </h1>
             <div class="flex flex-wrap justify-center items-center">
-                <div v-for="(item, index) in action">
-                    <Card v-if="index!=action.length-1" :fields="item" class="bg-black text-white m-3" 
+                <Card :fields="action[0]" class="bg-black text-white m-3" 
                         @buttonClick="(...args)=>$emit('buttonUserActionReq', ...args)"
+                 />
+                <div v-for="(item, index) in decrypted">
+                    <Card v-if="item.active==='true'" :fields="item" class="bg-black text-white m-3" 
+                            @buttonClick="(...args)=>$emit('buttonUserProofReq', ...args)"
                     />
                 </div>
             </div>
@@ -45,6 +48,6 @@
 
 <script setup>
 import Card from "./Card";
-defineProps(['active', 'action', 'submitted', 'account']);
+defineProps(['active', 'action', 'decrypted', 'submitted', 'account']);
 defineEmits(['buttonUserActiveReq', 'buttonUserActionReq']);
 </script>

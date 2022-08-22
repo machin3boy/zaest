@@ -16,8 +16,8 @@
     />
     
     <UserPage v-else-if="currentPath==='#/userpage'" class="flex grow" 
-      :active="userActiveRequestCards" :action="userActionCards" 
-      :submitted="userSubmittedRequests" :account="accountAddress"
+      :active="userActiveRequestCards" :action="userActionCards"
+      :decrypted="userProofCards" :submitted="userSubmittedRequests" :account="accountAddress"
       @buttonUserActiveReq="handleUserActive" @buttonUserActionReq="handleUserAction"
     />
     
@@ -198,6 +198,7 @@ const userActionCards = ref([
   "texts": {
     "request type": "",
     "requesting verifier": "",
+    "nonce": "",
     "request time": "",
     "request expiry time": "",
   },
@@ -207,24 +208,65 @@ const userActionCards = ref([
   ]
 },
 {
-  "title": "request parameters",
-  "texts": {
-    "field requested": "",
-
-    "request operation": "",
-    "request arguments": "",
-    "IPFS CID": ""
-  },
-  "buttons": [
-    "place data on IPFS (optional)",
-    "submit response to smart contract",
-    "submit response to s.c. & IPFS",
-  ]
-},
-{
   "active": "false",
 }
 ])
+
+const userProofCards = ref([
+{
+  "title": "data onboarding parameters",
+  "texts": {
+    "field requested": "",
+    "new data": "",
+    "update operation": "",
+    "arguments": "",
+    "IPFS CID (optional)": ""
+  },
+  "buttons": [
+    "place data on IPFS (optional)",
+    "generate ZKP for smart contract",
+    "submit response to smart contract",
+    "generate ZKP for smart contract & IPFS",
+    "submit response to smart contract & IPFS",
+  ],
+  "data": {
+    "e_ru": "",
+    "kPrime": "",
+    "h_dp_0": "",
+    "h_dp_1": "",
+    "h_ru_0": "",
+    "h_ru_1": "",
+    "tLimit": "",
+    "k": "",
+    "dPrime": "",
+    "updateOp": "",
+    "ar": "",
+    "v": "",
+  },
+  "active": "false",
+},
+{
+  "title": "data verification parameters",
+  "texts": {
+    "field requested": "",
+    "IPFS CID (optional)": ""
+  },
+  "buttons": [
+    "place data on IPFS (optional)",
+    "generate ZKP for smart contract",
+    "submit response to smart contract",
+    "generate ZKP for smart contract & IPFS",
+    "submit response to s.c. & IPFS",
+  ],
+  "data": {
+    "e_rq": "",
+    "h_tx_0": "",
+    "h_tx_1": "",
+    "nonce": "",
+    "v": "v"
+  },
+  "active": "false",
+}])
 
 const verifierSubmittedRequests = ref([]);
 const verifierReceivedProofs = ref([]);
@@ -337,7 +379,7 @@ const handleOnboardingReq = async (...args) => {
     const h_ru = utilFns.hashStr(ru);
     const h_ru_0 = utilFns.hexToBig(h_ru.substring(0, h_ru.length/2)).toString();
     const h_ru_1 = utilFns.hexToBig(h_ru.substring(h_ru.length/2)).toString();
-    const k  = t["generated ephemeral key"];
+    const k  = t["generated ephemeral key"].replace(/\s+/g, "");
     const e_ru = await performAES(k, ru, 'encrypt');
     const kPrime = await performRSA(p, k, 'encrypt');
     const n = utilFns.oneTimeKey(16);
@@ -382,6 +424,7 @@ const handleOnboardingReq = async (...args) => {
           "texts": {
             "request type": "onboard new data",
             "requesting verifier": accountAddress.value,
+            "nonce": n,
             "request time": dateStringD,
             "request expiry time": dateStringE,
           },
@@ -397,6 +440,7 @@ const handleOnboardingReq = async (...args) => {
           "texts": {
             "request type": "onboard new data",
             "requested account": userAddress,
+            "nonce": n,
             "request time": dateStringD,
             "request expiry time": dateStringE,
           },
@@ -455,6 +499,7 @@ const handleOwnershipReq = async (...args) => {
           "texts": {
             "request type": "proof of ownership",
             "requested account": userAddress,
+            "nonce": n,
             "request time": dateStringD,
             "request expiry time": dateStringE,
           },
@@ -468,6 +513,7 @@ const handleOwnershipReq = async (...args) => {
           "texts": {
             "request type": "proof of ownership",
             "requesting verifier": accountAddress.value,
+            "nonce": n,
             "request time": dateStringD,
             "request expiry time": dateStringE,
           },
@@ -488,18 +534,99 @@ const handleUserActive = async (...args) => {
   }
   if(args[1]==='select request'){
     let activeCard = userActiveRequestCards.value[args[0]];
-    userActionCards.value[2].active = 'true';
+    userActionCards.value[1].active = 'true';
     userActionCards.value[0].title = activeCard.title;
     userActionCards.value[0].texts["request type"] = activeCard.texts["request type"];
     userActionCards.value[0].texts["requesting verifier"] = activeCard.verifier;
     userActionCards.value[0].texts["request time"] = activeCard.texts["request time"];  
     userActionCards.value[0].texts["request expiry time"] = activeCard.texts["request expiry time"];
+    userActionCards.value[0].texts["nonce"] = activeCard.texts["nonce"];
   }
 }
 
 const handleUserAction = async (...args) => {
   if(args[0]==='ignore request'){
-    userActionCards.value[2].active = 'false';
+    userActionCards.value[1].active = 'false';
+    userProofCards.value[0].active = 'false';
+    userProofCards.value[1].active = 'false';
+  }
+  if(args[0]==='decrypt request'){
+    const verifierAddress = userActionCards.value[0].texts["requesting verifier"];
+    const userAddress = accountAddress.value;
+    const n = userActionCards.value[0].texts["nonce"];
+    const nonce = utilFns.strToBig(n).toString();
+    //onboard new data || proof of ownership
+    const requestType = userActionCards.value[0].texts["request type"];
+
+    let RSA_PVK = rsaKeys.value.
+              filter((x) => x.address === accountAddress.value)
+              [0].rsaPVK;
+    let u = aesKeys.value.
+              filter((x) => x.address === accountAddress.value)
+              [0].aesKey;
+
+    if(requestType === "onboard new data"){
+      //data retrieval
+      //dataUpdateRequestsStrVar = e_ru, kPrime
+      //dataUpdateRequestIntVar = h_dp_0, h_dp_1, h_rq_0, h_rq_1, tlimit
+      let e_ru, kPrime, h_dp_0, h_dp_1, h_ru_0, h_ru_1, tLimit;
+      await zaestContract.methods.dataUpdateRequestsStrVar(verifierAddress,userAddress,nonce,0).call().then((result)=>{e_ru=result});
+      await zaestContract.methods.dataUpdateRequestsStrVar(verifierAddress,userAddress,nonce,1).call().then((result)=>{kPrime=result});
+      await zaestContract.methods.dataUpdateRequestIntVar(verifierAddress,userAddress,nonce,0).call().then((result)=>{h_dp_0=result});
+      await zaestContract.methods.dataUpdateRequestIntVar(verifierAddress,userAddress,nonce,1).call().then((result)=>{h_dp_1=result});
+      await zaestContract.methods.dataUpdateRequestIntVar(verifierAddress,userAddress,nonce,2).call().then((result)=>{h_ru_0=result})
+      await zaestContract.methods.dataUpdateRequestIntVar(verifierAddress,userAddress,nonce,3).call().then((result)=>{h_ru_1=result});
+      await zaestContract.methods.dataUpdateRequestIntVar(verifierAddress,userAddress,nonce,4).call().then((result)=>{tLimit=result});
+      //decryption of retrieved data
+      let k = await performRSA(RSA_PVK, kPrime, 'decrypt');
+      k = k.replace(/\s+/g, "");
+      const ru = await performAES(k, e_ru, 'decrypt');
+      const dPrime = ru.substring(0, 64);
+      const updateOp = ru.substring(64, 80);
+      const ar = ru.substring(80, 96);
+      const v = ru.substring(96);
+
+      userProofCards.value[0].texts["field requested"] = v;
+      userProofCards.value[0].texts["new data"] = dPrime;
+      userProofCards.value[0].texts["update operation"] = updateOp;
+      userProofCards.value[0].texts["arguments"] = ar;
+      userProofCards.value[0].data["e_ru"] = e_ru;
+      userProofCards.value[0].data["kPrime"] = kPrime;
+      userProofCards.value[0].data["h_dp_0"] = h_dp_0;
+      userProofCards.value[0].data["h_dp_1"] = h_dp_1;
+      userProofCards.value[0].data["h_ru_0"] = h_ru_0;
+      userProofCards.value[0].data["h_ru_1"] = h_ru_1;
+      userProofCards.value[0].data["tLimit"] = tLimit;
+      userProofCards.value[0].data["k"] = k;
+      userProofCards.value[0].data["dPrime"] = dPrime;
+      userProofCards.value[0].data["updateOp"] = updateOp;
+      userProofCards.value[0].data["ar"] = ar;
+      userProofCards.value[0].data["v"] = v;
+      userProofCards.value[0].active = 'true';
+    }
+    else if(requestType === "proof of ownership"){
+      //data retrieval
+      //dataProofRequestsStrVar = e_rq
+      //dataProofRequestsIntVar = h_tx_0, h_tx_1
+      let e_rq;
+      let h_tx_0;
+      let h_tx_1;
+      console.log("parameters:", nonce, verifierAddress, userAddress);
+      await zaestContract.methods.dataProofRequestsStrVar(verifierAddress,userAddress,nonce).call().then((result)=>{e_rq=result});
+      await zaestContract.methods.dataProofRequestsIntVar(verifierAddress,userAddress,nonce,0).call().then((result)=>{h_tx_0=result});
+      await zaestContract.methods.dataProofRequestsIntVar(verifierAddress,userAddress,nonce,1).call().then((result)=>{h_tx_1=result});
+      //decryption of retrieved data
+      const v = await performRSA(RSA_PVK, e_rq, 'decrypt');
+      console.log(v);
+      
+      userProofCards.value[1].texts["field requested"] = v; 
+      userProofCards.value[1].data.e_rq = e_rq;
+      userProofCards.value[1].data.h_tx_0 = h_tx_0;
+      userProofCards.value[1].data.h_tx_1 = h_tx_1;
+      userProofCards.value[1].data.nonce = nonce;
+      userProofCards.value[1].data.v = v;
+      userProofCards.value[1].active = 'true';
+    }
   }
 }
 
@@ -513,7 +640,7 @@ async function performAES(aesKeyParam, aesDataParam, aesFunctionParam) {
     result = aesFunctionParam === "encrypt" ?
     response['data'][1].substring(14) : response['data'][0].substring(9);
   });
-  return result.replace(/\s/g, '');
+  return result;
 }
 
 async function performRSA(rsaKeyParam, rsaDataParam, rsaFunctionParam) {
