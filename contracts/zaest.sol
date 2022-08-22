@@ -30,10 +30,10 @@ contract Zaest {
     mapping (address => string) public asymmetricKeychain;
 
     //encrypted user data housed in the smart contract
-    mapping (address => mapping (uint => mapping (uint => uint[6]))) userDataSmartContract;
+    mapping (address => mapping (uint => mapping (uint => uint[6]))) public userDataSmartContract;
 
     //encrypted user data housed on IPFS
-    mapping (address => mapping (uint => mapping (uint => uint[6]))) userDataIPFS;
+    mapping (address => mapping (uint => mapping (uint => uint[6]))) public userDataIPFS;
 
     //encrypted requests to update data from verifiers
     mapping (address => mapping (address => mapping (uint => string[2]))) public dataUpdateRequestsStrVar;
@@ -51,10 +51,10 @@ contract Zaest {
     mapping (address => mapping (address => mapping (uint => uint[6]))) public userProofIPFS;
 
     //approved list of verifiers
-    mapping (address => bool) registeredVerifiers;
+    mapping (address => bool) public registeredVerifiers;
 
     //read permissions verifiers have for specific fields 
-    mapping (address => mapping (string => bool)) private verifierPermissions;
+    mapping (address => mapping (string => bool)) public verifierPermissions;
 
     //permissions verifiers have for specific update functionality
     mapping (address => mapping (string => bool)) public updateFunctionPermissions;
@@ -88,6 +88,11 @@ contract Zaest {
         updateFunctionPermissions[verifier][permission] = newVal;
     }
 
+    //this function will enable a verifier to submit requests
+    function registerVerifier(address verifier) public onlyZaest{
+        registeredVerifiers[verifier] = true;
+    }
+
     //this function immediately revokes a verifier independent of which permissions they may retain
     function revokeVerifier(address verifier) public onlyZaest{
         registeredVerifiers[verifier] = false;
@@ -100,6 +105,7 @@ contract Zaest {
 
     //registering the first Zaest developer with the contract constructor as the first privileged user 
     constructor(){
+        registeredVerifiers[msg.sender] = true;
         zaestDeveloperAccess[msg.sender] = true;
     }
 
@@ -328,4 +334,5 @@ contract Zaest {
         }                    
     }
 }
+
 

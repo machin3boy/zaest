@@ -104,7 +104,7 @@ const currentView = computed(() => {
 const url = "http://localhost:3001";
 const connectionStatus = ref('Connect Wallet');
 const accountAddress = ref('');
-const contractAddress = "0x31c07a2375d68195FE3F69A3F506f27e97F3F02E";
+const contractAddress = "0x3D951bb06ba16F91d140D26a608C7BBA20A921F7";
 const ABI = require('../ABI.json');
 let web3;
 let zaestContract;
@@ -210,6 +210,7 @@ const userActionCards = ref([
   "title": "request parameters",
   "texts": {
     "field requested": "",
+
     "request operation": "",
     "request arguments": "",
     "IPFS CID": ""
