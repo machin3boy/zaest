@@ -7,9 +7,14 @@
     </template>
     <div v-for="(value, key) in fields['texts']" class="my-1">
       <div class="my-2">
-        <p v-if="key.substring(0,4)==='IPFS'">
-            {{ key }} + ": " value
-        </p>
+        <div v-if="key.substring(0,4)==='IPFS'">
+          <p>
+            {{ key + ": " + value.substring(0, 30) }}
+          </p>
+          <p>
+            {{ value.substring(30) }}
+          </p>
+        </div>
         <p v-else-if="value.length>24 && value.substring(0,12)!=='b\'-----BEGIN'">
             {{ key + ": " + value.substring(0,10)
             + "  ...  " + value.substring(value.length-10)}}

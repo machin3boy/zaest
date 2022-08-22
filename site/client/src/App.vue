@@ -27,55 +27,8 @@
       @updateOwnershipReq="updateOwnershipReq" @buttonOwnershipReq="handleOwnershipReq"
     />
 
-    <Home v-else />
-    
-    <p class="text-2xl">
-      {{zkSNARKsOwnershipIPFS}}
-    </p>
+    <Home v-else /> 
 
-    <p class="text-2xl">
-      {{zkSNARKsOwnershipHashes}}
-    </p>
-
-    <p class="text-2xl">
-      {{zkSNARKsOnboardingIPFS}}
-    </p>
-
-    <p class="text-2xl">
-      {{zkSNARKsOnboardingHashes}}
-    </p>
-
-    <p class="text-2xl">
-      {{zkSNARKsOnboardingAES}}
-    </p>
-
-    <p class="text-2xl">
-      {{userActionCards}}
-    </p>
-
-    <p class="text-2xl">
-        {{userActiveRequestCards}}
-    </p>
-
-    <p class="text-2xl">
-        {{verifierSubmittedRequests}}
-    </p>
-
-    <p class="text-2xl">
-      {{verifierRequestCards}}
-    </p>
-    <p class="text-2xl">
-      {{fieldTest}}
-    </p>
-    <p class="text-2xl">
-        {{secondaryKeysCards}}
-    </p>
-    <p class="text-2xl">
-        {{aesKeys}}
-    </p>
-    <p class="text-2xl">
-        {{rsaKeys}}
-    </p>
     <el-backtop :right="30" :bottom="30" class="bg-black" />
     <Footer />
   </div>
@@ -128,7 +81,7 @@ const currentView = computed(() => {
 const url = "http://localhost:3001";
 const connectionStatus = ref('Connect Wallet');
 const accountAddress = ref('');
-const contractAddress = "0xc46f907caA8153E5AcE6b1F649De78D1CB5E585e";
+const contractAddress = "0x5B3fB9655fab94D5A9491Ed3f8a4620afBA874A5";
 const ABI = require('../ABI.json');
 let web3;
 let zaestContract;
@@ -682,10 +635,12 @@ const handleUserProof = async (...args) => {
       console.log(res);
       let res2 = generateOnboardingProofAES();
       console.log(res2);
+      notification("ZKP notification", "Your proofs are ready");
     }
     if(i === 1){
       let res = generateOwnershipProofHashes();
       console.log(res);
+      notification("ZKP notification", "Your proofs are ready");
     }
   }
   if(button==='generate ZKP for smart contract & IPFS'){
@@ -696,12 +651,14 @@ const handleUserProof = async (...args) => {
       console.log(res2);
       let res3 = generateOnboardingProofIPFS();
       console.log(res3);
+      notification("ZKP notification", "Your proofs are ready");
     }
     if(i===1){
       let res = generateOwnershipProofHashes();
       console.log(res);
       let res2 = generateOwnershipProofIPFS();
       console.log(res2);
+      notification("ZKP notification", "Your proofs are ready");
     }
   }
   if(button==="place data on IPFS (optional)"){
@@ -898,7 +855,7 @@ async function generateOnboardingProofIPFS(){
 
   
   if(placeToIPFS.value[0]==="true" && placeToIPFS.value[1]===0){ 
-      let d = userProofCards.value[0].data.a + userProofCards.value[0].data.o;
+      let d = "value of a: " + aA + aB + aC + aD + ", value of o: " + oA + oB;
       const f = new File([d], 'zaest_onboarding_proof.txt');
       const cid = await storageClient.put([f]);
       userProofCards.value[0].data.c = cid;
@@ -1120,7 +1077,7 @@ async function generateOwnershipProofIPFS(){
   let h_ipfs_p1 = utilFns.hexToBig(h_ipfs_p.substring(32));
 
   if(placeToIPFS.value[0]==="true" && placeToIPFS.value[1]===1){ 
-      let d = userProofCards.value[1].data.e_rs;
+      let d = "value of e_rs: " + e_rsA + " " + e_rsB + " " + e_rsC + " " + e_rsD;
       const f = new File([d], 'zaest_onboarding_proof.txt');
       const cid = await storageClient.put([f]);
       userProofCards.value[1].data.c = cid;
