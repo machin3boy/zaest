@@ -19,6 +19,7 @@
       :active="userActiveRequestCards" :action="userActionCards"
       :decrypted="userProofCards" :submitted="userSubmittedRequests" :account="accountAddress"
       @buttonUserActiveReq="handleUserActive" @buttonUserActionReq="handleUserAction"
+      @buttonUserProofReq="handleUserProof"
     />
     
     <VerifierPage v-else-if="currentPath==='#/verifierpage'" class="flex grow"
@@ -29,7 +30,19 @@
     />
 
     <Home v-else />
-   
+
+    <p class="text-2xl">
+      {{zkSNARKsOnboardingIPFS}}
+    </p>
+
+    <p class="text-2xl">
+      {{zkSNARKsOnboardingHashes}}
+    </p>
+
+    <p class="text-2xl">
+      {{zkSNARKsOnboardingAES}}
+    </p>
+
     <p class="text-2xl">
       {{userActionCards}}
     </p>
@@ -124,7 +137,6 @@ async function connectMetamask(){
   }
 }
 
-
 const secondaryKeysCards = ref([
 {
   "title": "AES keys",
@@ -157,8 +169,6 @@ const secondaryKeysCards = ref([
   ]
 },
 ]);
-
-
 
 const verifierRequestCards = ref([
 {
@@ -242,6 +252,7 @@ const userProofCards = ref([
     "updateOp": "",
     "ar": "",
     "v": "",
+    "c": "bafybeichrcedtfge7lxeevawzeb2fslnmwrwup7qf5tjd2kiaf477lichm"
   },
   "active": "false",
 },
@@ -273,11 +284,13 @@ const verifierReceivedProofs = ref([]);
 const userActiveRequestCards = ref([]);
 const userSubmittedRequests = ref([]);
 
-
 const aesKeys = ref([]);
 const rsaKeys = ref([]);
 
 const fieldTest = ref('');
+const zkSNARKsOnboardingHashes = ref('');
+const zkSNARKsOnboardingAES = ref('');
+const zkSNARKsOnboardingIPFS = ref('');
 
 const updateOnboardingReq = (...args) => {
   verifierRequestCards.value[0].inputs[args[0]] = args[1];
@@ -628,6 +641,165 @@ const handleUserAction = async (...args) => {
       userProofCards.value[1].active = 'true';
     }
   }
+}
+
+/*
+    "place data on IPFS (optional)",
+    "generate ZKP for smart contract",
+    "submit response to smart contract",
+    "generate ZKP for smart contract & IPFS",
+    "submit response to smart contract & IPFS",
+*/
+
+const handleUserProof = async (...args) => {
+  // index 0: onboarding, index 1: verification
+  const i = args[0];
+  const button = args[1];
+  if(button==='generate ZKP for smart contract'){
+    if(i === 0){
+      //let res = generateOnboardingProofHashes();
+      //console.log(res);
+      //let res2 = generateOnboardingProofAES();
+      //console.log(res2);
+      let res3 = generateOnboardingProofIPFS();
+      console.log(res3);
+    }
+  }
+}
+
+async function generateOnboardingProofHashes(){
+  const d = userProofCards.value[0].data;
+  let u = aesKeys.value.
+          filter((x) => x.address === accountAddress.value)
+          [0].aesKey;
+  let a = await performAES(u, d.dPrime, 'encrypt')
+  a = a.replace(/\s/g, '');
+  let aA = a.substring(0,32);
+  let aB = a.substring(32,64);
+  let aC = a.substring(64,96);
+  let aD = a.substring(96, 128);
+  let h_da = utilFns.hashHex(utilFns.strToHex(d.dPrime.substring(0, 16)) +
+                     utilFns.strToHex(d.dPrime.substring(16, 32)) +
+                     utilFns.strToHex(d.dPrime.substring(32, 48)) +
+                     utilFns.strToHex(d.dPrime.substring(48)) +
+                     a + utilFns.strToHex(u));
+  let onboardingHashesProof;
+  await axios.get(`${url}/zokratesOnboardingHashes`,
+    { params: {
+      u:  utilFns.strToBig(u),
+      dA: utilFns.strToBig(d.dPrime.substring(0, 16)),
+      dB: utilFns.strToBig(d.dPrime.substring(16, 32)),
+      dC: utilFns.strToBig(d.dPrime.substring(32, 48)),
+      dD: utilFns.strToBig(d.dPrime.substring(48)),
+      up: utilFns.strToBig(d.updateOp),
+      ar: utilFns.strToBig(d.ar),
+      vA: utilFns.strToBig(d.v.substring(0, 16)),
+      vB: utilFns.strToBig(d.v.substring(16)),
+      aA: utilFns.hexToBig(aA),
+      aB: utilFns.hexToBig(aB),
+      aC: utilFns.hexToBig(aC),
+      aD: utilFns.hexToBig(aD),
+      oA: utilFns.hexToBig(utilFns.hashStr(d.v + u).substring(0,32)),
+      oB: utilFns.hexToBig(utilFns.hashStr(d.v + u).substring(32)),
+      h_keyA: utilFns.hexToBig(utilFns.hashStr(u).substring(0, 32)),
+      h_keyB: utilFns.hexToBig(utilFns.hashStr(u).substring(32)),
+      h_ruA: d.h_ru_0,
+      h_ruB: d.h_ru_1,
+      h_daA: utilFns.hexToBig(h_da.substring(0, 32)),
+      h_daB: utilFns.hexToBig(h_da.substring(32)),
+      }
+    },
+    {
+      transformResponse: [data => data]
+    }).then((res) => {
+      zkSNARKsOnboardingHashes.value = JSON.stringify(res.data);
+      onboardingHashesProof = JSON.stringify(res.data);
+    });
+  return onboardingHashesProof;
+}
+
+async function generateOnboardingProofIPFS(){
+  const d = userProofCards.value[0].data;
+  let u = aesKeys.value.
+          filter((x) => x.address === accountAddress.value)
+          [0].aesKey;
+  let a = await performAES(u, d.dPrime, 'encrypt')
+  a = a.replace(/\s/g, '');
+  let aA = a.substring(0,32);
+  let aB = a.substring(32,64);
+  let aC = a.substring(64,96);
+  let aD = a.substring(96, 128);
+  let oA =  utilFns.hashStr(d.v + u).substring(0,32);
+  let oB =  utilFns.hashStr(d.v + u).substring(32);
+  let cA =  d.c.substring(0,16);
+  let cB =  d.c.substring(16,32);
+  let cC =  d.c.substring(32,48);
+  let cD =  d.c.substring(48) + "_".repeat(64-d.c.length);
+  let h_ipfs_d = utilFns.hashHex(a + oA + oB + utilFns.strToHex(cA+cB+cC+cD));
+  let res;
+
+  await axios.get(`${url}/zokratesOnboardingIPFS`,
+    { params: {
+      aA: utilFns.hexToBig(aA),
+      aB: utilFns.hexToBig(aB),
+      aC: utilFns.hexToBig(aC),
+      aD: utilFns.hexToBig(aD),
+      oA: utilFns.hexToBig(oA),
+      oB: utilFns.hexToBig(oB),
+      cA: utilFns.strToBig(cA),
+      cB: utilFns.strToBig(cB),
+      cC: utilFns.strToBig(cC),
+      cD: utilFns.strToBig(cD),
+      h_ipfs_d0: utilFns.hexToBig(h_ipfs_d.substring(0,32)),
+      h_ipfs_d1: utilFns.hexToBig(h_ipfs_d.substring(32)),
+      }
+    },
+    {
+      transformResponse: [data => data]
+    }).then((res) => {
+      zkSNARKsOnboardingIPFS.value = JSON.stringify(res.data);
+      res = JSON.stringify(res.data);
+    });
+  return res;
+}
+
+async function generateOnboardingProofAES(){
+
+  const d = userProofCards.value[0].data;
+  let u = aesKeys.value.
+          filter((x) => x.address === accountAddress.value)
+          [0].aesKey;  
+  let a = await performAES(u, d.dPrime, 'encrypt')
+  a = a.replace(/\s/g, '');
+  let aA = a.substring(0,32);
+  let aB = a.substring(32,64);
+  let aC = a.substring(64,96);
+  let aD = a.substring(96, 128);
+  let res;
+  await axios.get(`${url}/zokratesOnboardingAES`,
+    { params: {
+      u:  utilFns.strToBig(u),
+      dA: utilFns.strToBig(d.dPrime.substring(0, 16)),
+      dB: utilFns.strToBig(d.dPrime.substring(16, 32)),
+      dC: utilFns.strToBig(d.dPrime.substring(32, 48)),
+      dD: utilFns.strToBig(d.dPrime.substring(48)),
+      aA: utilFns.hexToBig(aA),
+      aB: utilFns.hexToBig(aB),
+      aC: utilFns.hexToBig(aC),
+      aD: utilFns.hexToBig(aD),
+      h_keyA: utilFns.hexToBig(utilFns.hashStr(u).substring(0, 32)),
+      h_keyB: utilFns.hexToBig(utilFns.hashStr(u).substring(32)),
+      h_dpA: utilFns.hexToBig(utilFns.hashStr(d.dPrime).substring(0,32)),
+      h_dpB: utilFns.hexToBig(utilFns.hashStr(d.dPrime).substring(32)),
+      }
+    },
+    {
+      transformResponse: [data => data]
+    }).then((res) => {
+      zkSNARKsOnboardingAES.value = JSON.stringify(res.data);
+      res = JSON.stringify(res.data);
+    });
+  return res;
 }
 
 async function performAES(aesKeyParam, aesDataParam, aesFunctionParam) {

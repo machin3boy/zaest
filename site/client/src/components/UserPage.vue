@@ -25,7 +25,7 @@
                  />
                 <div v-for="(item, index) in decrypted">
                     <Card v-if="item.active==='true'" :fields="item" class="bg-black text-white m-3" 
-                            @buttonClick="(...args)=>$emit('buttonUserProofReq', ...args)"
+                            @buttonClick="(...args)=>$emit('buttonUserProofReq', index, ...args)"
                     />
                 </div>
             </div>
