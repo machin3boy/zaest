@@ -10,3 +10,18 @@ Of course, some of the proposed use-cases of this protocol are highly contingent
 Chainlink's prospective advantages to the protocol also include the possibility to simplify and scale the ZKP portions of the protocol more easily (although the protocol outlined as is is infinitely scaleable, Chainlink can allow for a number of optimizations through off-chain computations).
 
 The design of the protocol is presented in the file docs/Zaest.pdf.
+
+To access the verification and proving keys for each of the five individual circuit components please retrieve them from the following IPFS CIDs: 
+
+    bafybeigx3mowmrbetae2m46rocpdi6staojsma6nzyn2u5bpmekssdmhtu
+    bafybeiceajv3dsqma3wu6lr66dq7exiw3ofrrux4qpgidys3xgu6imc3iq
+    bafybeibclt3iw325nw24f3ztewiako3k52imdpvnpfryhhb76zbvwlesbu
+    bafybeieqjlygtdwmpo5bpuzrvqv3p3gwxa5hnp3wehays4j6z3u7etdm7m
+    bafybeihtuzahzj7y32ngkux226yq5vrlirxa7auzbolb3f67qhc26zsfke
+    bafybeig2av5geiooe5wdh2rzk3wr2bildp5wofc63ubryu2ectdsm2knhe
+    bafybeigerd7x6dltb5knj4xsvmh5ypgobxp4bqvilosgzac67xkrx7zpvu
+    bafybeigatnahftav55ajmunugmnxco7lcbj5lyayivkpzmbwosen35avbu
+    bafybeiavnn2ezvflzgei2v2h5xzasyvb32lmnzaxm3rbjsbrmpegqy3wgi
+    bafybeibwwsbwd5dmkyrxiv4jriksu63426uagubsg4fbzhx334hy6l2w44
+
+
