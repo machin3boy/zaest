@@ -118,6 +118,46 @@ app.get('/zokratesOnboardingIPFS', function(req, res) {
     res.send(proof);
 });
 
+app.get('zokratesOwnershipHashes', function(req, res) {
+    const r = req.query;
+    const proofCommand = "current_dir=$PWD; cd ../../ZoKrates/ownership_hashes_params; " + 
+                         "zokrates compute-witness -a " + r.u + " " + r.dA + " " + r.dB + " "
+                         + r.dC + " " + r.dD + " " + r.vA + " " + r.vB + " " + r.aA + " " + 
+                         r.aB + " " + r.aC + " " + r.aD + " " + r.oA + " " + r.oB + " " + 
+                         r.n + " " + r.h_keyA + " " + r.h_keyB + " " + r.h_txA + " " + 
+                         r.h_txB + " " + r.h_daA + " " + r.h_daB + " " + r.h_dnA + " " + 
+                         r.h_dnB + "; zokrates generate-proof; cd $current_dir";
+    const proofLocation = "../../ZoKrates/ownership_hashes_params/proof.json";
+    const proofCommandOutput = execSync(proofCommand).toString();
+
+    console.log(r);
+    console.log(proofCommandOutput);
+
+    let proof = JSON.stringify(JSON.parse(fs.readFileSync(proofLocation, 'utf8')));
+    console.log("proof index.js:" + proof);
+    res.setHeader('Content-Type', 'application/json');
+    res.send(proof);
+});
+
+app.get('zokratesOwnershipIPFS', function(req, res) {
+    const r = req.query;
+    const proofCommand = "current_dir=$PWD; cd ../../ZoKrates/ownership_ipfs_params; " + 
+                         "zokrates compute-witness -a " + r.e_rsA + " " + r.e_rsB + " " +
+                         r.e_rsC + " " + r.e_rsD +  " " + r.cA + " " + r.cB + " " + r.cC +
+                         " " + r.cD + " " + r.h_ipfs_pA + " " + r.h_ipfs_pB + 
+                         "; zokrates generate-proof; cd $current_dir"; 
+    const proofLocation = "../../ZoKrates/ownership_ipfs_params/proof.json";
+    const proofCommandOutput = execSync(proofCommand).toString();
+
+    console.log(r);
+    console.log(proofCommandOutput);
+
+    let proof = JSON.stringify(JSON.parse(fs.readFileSync(proofLocation, 'utf8')));
+    console.log("proof index.js:" + proof);
+    res.setHeader('Content-Type', 'application/json');
+    res.send(proof);
+})
+
 app.listen(PORT, () => {
     console.log(`App is listening at http://localhost:${PORT}`)
 })

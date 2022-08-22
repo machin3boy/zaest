@@ -1,10 +1,8 @@
 <template>
   <div class="flex flex-col bg-stone-900 text-white min-h-screen" > 
-    
     <ParticlesBackground v-if="currentPath!=='#/userpage' &&
                                currentPath!=='#/verifierpage' &&
                                currentPath!=='#/secondarykeys'" />
-    
     <Menu :connectionStatus="connectionStatus" @connect="connectMetamask"/>
    
     <About v-if="currentPath==='#/about'" class="flex grow" />
@@ -30,6 +28,14 @@
     />
 
     <Home v-else />
+    
+    <p class="text-2xl">
+      {{zkSNARKsOwnershipIPFS}}
+    </p>
+
+    <p class="text-2xl">
+      {{zkSNARKsOwnershipHashes}}
+    </p>
 
     <p class="text-2xl">
       {{zkSNARKsOnboardingIPFS}}
@@ -117,7 +123,7 @@ const currentView = computed(() => {
 const url = "http://localhost:3001";
 const connectionStatus = ref('Connect Wallet');
 const accountAddress = ref('');
-const contractAddress = "0x3D951bb06ba16F91d140D26a608C7BBA20A921F7";
+const contractAddress = "0xD914563518E2ebA175311DD1794A535311e6bd5c";
 const ABI = require('../ABI.json');
 let web3;
 let zaestContract;
@@ -252,7 +258,8 @@ const userProofCards = ref([
     "updateOp": "",
     "ar": "",
     "v": "",
-    "c": "bafybeichrcedtfge7lxeevawzeb2fslnmwrwup7qf5tjd2kiaf477lichm"
+    "c": "bafybeichrcedtfge7lxeevawzeb2fslnmwrwup7qf5tjd2kiaf477lichm",
+    "verifier": "",
   },
   "active": "false",
 },
@@ -273,8 +280,10 @@ const userProofCards = ref([
     "e_rq": "",
     "h_tx_0": "",
     "h_tx_1": "",
+    "n": "",
     "nonce": "",
-    "v": "v"
+    "v": "v",
+    "verifier": "",
   },
   "active": "false",
 }])
@@ -291,6 +300,8 @@ const fieldTest = ref('');
 const zkSNARKsOnboardingHashes = ref('');
 const zkSNARKsOnboardingAES = ref('');
 const zkSNARKsOnboardingIPFS = ref('');
+const zkSNARKsOwnershipHashes = ref('');
+const zkSNARKsOwnershipIPFS = ref('');
 
 const updateOnboardingReq = (...args) => {
   verifierRequestCards.value[0].inputs[args[0]] = args[1];
@@ -615,6 +626,7 @@ const handleUserAction = async (...args) => {
       userProofCards.value[0].data["updateOp"] = updateOp;
       userProofCards.value[0].data["ar"] = ar;
       userProofCards.value[0].data["v"] = v;
+      userProofCards.value[0].data["verifier"] = verifierAddress;
       userProofCards.value[0].active = 'true';
     }
     else if(requestType === "proof of ownership"){
@@ -637,19 +649,13 @@ const handleUserAction = async (...args) => {
       userProofCards.value[1].data.h_tx_0 = h_tx_0;
       userProofCards.value[1].data.h_tx_1 = h_tx_1;
       userProofCards.value[1].data.nonce = nonce;
+      userProofCards.value[1].data.n = n;
       userProofCards.value[1].data.v = v;
+      userProofCards.value[1].data.verifier = verifierAddress;
       userProofCards.value[1].active = 'true';
     }
   }
 }
-
-/*
-    "place data on IPFS (optional)",
-    "generate ZKP for smart contract",
-    "submit response to smart contract",
-    "generate ZKP for smart contract & IPFS",
-    "submit response to smart contract & IPFS",
-*/
 
 const handleUserProof = async (...args) => {
   // index 0: onboarding, index 1: verification
@@ -657,13 +663,40 @@ const handleUserProof = async (...args) => {
   const button = args[1];
   if(button==='generate ZKP for smart contract'){
     if(i === 0){
-      //let res = generateOnboardingProofHashes();
-      //console.log(res);
-      //let res2 = generateOnboardingProofAES();
-      //console.log(res2);
+      let res = generateOnboardingProofHashes();
+      console.log(res);
+      let res2 = generateOnboardingProofAES();
+      console.log(res2);
+    }
+    if(i === 1){
+      let res = generateOwnershipProofHashes();
+      console.log(res);
+    }
+  }
+  if(button==='generate ZKP for smart contract & IPFS'){
+    if(i===0){
+      let res = generateOnboardingProofHashes();
+      console.log(res);
+      let res2 = generateOnboardingProofAES();
+      console.log(res2);
       let res3 = generateOnboardingProofIPFS();
       console.log(res3);
     }
+    if(i===1){
+      let res = generateOwnershipProofHashes();
+      console.log(res);
+      let res2 = generateOwnershipProofIPFS();
+      console.log(res2);
+    }
+  }
+  if(button==="place data on IPFS (optional)"){
+    return;
+  }
+  if(button==="submit response to smart contract"){
+    return;
+  }
+  if(button==="submit response to smart contract & IPFS"){
+    return;
   }
 }
 
@@ -797,6 +830,174 @@ async function generateOnboardingProofAES(){
       transformResponse: [data => data]
     }).then((res) => {
       zkSNARKsOnboardingAES.value = JSON.stringify(res.data);
+      res = JSON.stringify(res.data);
+    });
+  return res;
+}
+
+//a browser-side ephemeral key that has to be the same to
+//correctly generate the proof for the ownership of the encrypted request
+//if IPFS is utilized
+const ephemereForOwnership = ref('');
+/*
+function( private field u, private field v
+        public field n, private field d,
+        public field o, public field a,  
+        public field e_rs, public field c,
+        public field h_key, public field h_tx,
+        public field h_da, public field h_dn,
+        public field h_ipfs_p){
+*/
+async function generateOwnershipProofHashes(){
+  const d = userProofCards.value[1].data;
+  const userAddress = accountAddress.value;
+  const verifierAddress = d.verifier;
+  let u = aesKeys.value.
+          filter((x) => x.address === accountAddress.value)
+          [0].aesKey;
+
+  let PBK_RSA_verifier = rsaKeys.value.
+                         filter((x) => x.address === verifierAddress)
+                         [0].rsaPBK;
+
+  const v = d.v;
+
+  let vA = utilFns.strToBig(v.substring(0,16));
+  let vB = utilFns.strToBig(v.substring(16));
+
+  const h_txA = d.h_tx_0;
+  const h_txB = d.h_tx_1;
+
+  let oA = utilFns.hexToBig(utilFns.hashStr(d.v + u).substring(0,32));
+  let oB = utilFns.hexToBig(utilFns.hashStr(d.v + u).substring(32));
+
+  let aA, aB, aC, aD, h_daA, h_daB;
+
+  await zaestContract.methods.userDataSmartContract(userAddress, oA, oB, 0).call().then((result)=>{aA=result});
+  await zaestContract.methods.userDataSmartContract(userAddress, oA, oB, 1).call().then((result)=>{aB=result});
+  await zaestContract.methods.userDataSmartContract(userAddress, oA, oB, 2).call().then((result)=>{aC=result});
+  await zaestContract.methods.userDataSmartContract(userAddress, oA, oB, 3).call().then((result)=>{aD=result});
+  await zaestContract.methods.userDataSmartContract(userAddress, oA, oB, 4).call().then((result)=>{h_daA=result});
+  await zaestContract.methods.userDataSmartContract(userAddress, oA, oB, 5).call().then((result)=>{h_daB=result});      
+
+  const dA = await performAES(u, BigInt(aA).toString(16), 'decrypt').replace(/\s+/g, "");
+  const dB = await performAES(u, BigInt(aB).toString(16), 'decrypt').replace(/\s+/g, "");
+  const dC = await performAES(u, BigInt(aC).toString(16), 'decrypt').replace(/\s+/g, "");
+  const dD = await performAES(u, BigInt(aD).toString(16), 'decrypt').replace(/\s+/g, "");
+
+  const k = utilFns.oneTimeKey(16);
+  ephemereForOwnership.value = k;
+
+  const e_rsA = await performAES(k, dA, 'encrypt').replace(/\s+/g, "");
+  const e_rsB = await performAES(k, dB, 'encrypt').replace(/\s+/g, "");
+  const e_rsC = await performAES(k, dC, 'encrypt').replace(/\s+/g, "");
+  const e_rsD = await performAES(k, dD, 'encrypt').replace(/\s+/g, "");
+  
+  const kPrime = await performRSA(PBK_RSA_verifier, k, 'encrypt');
+
+  let h_key = utilFns.hashStr(u);
+  let h_keyA = utilFns.hexToBig(h_key.substring(0,32));
+  let h_keyB = utilFns.hexToBig(h_key.substring(32));
+
+  let nonce = d.nonce;
+  let n = d.n;
+  let h_dn = utilFns.hashStr(dA+dB+dC+dD+v+n);
+  let h_dnA = utilFns.hexToBig(h_dn.substring(0,32));
+  let h_dnB = utilFns.hexToBig(h_dn.substring(32));
+
+  let res;
+
+  await axios.get(`${url}/zokratesOwnershipHashes`, 
+  { params: {
+      u: utilFns.strToBig(u),
+      dA: utilFns.strToBig(dA),
+      dB: utilFns.strToBig(dB),
+      dC: utilFns.strToBig(dC),
+      dD: utilFns.strToBig(dD),
+      vA: vA,
+      vB: vB,
+      aA: aA,
+      aB: aB,
+      aC: aC,
+      aD: aD,
+      oA: oA,
+      oB: oB,
+      n: n,
+      h_keyA: h_keyA,
+      h_keyB: h_keyB,
+      h_txA: h_txA,
+      h_txB: h_txB,
+      h_daA: h_daA,
+      h_daB: h_daB,
+      h_dnA: h_dnA,
+      h_dnB: h_dnB
+    }},
+    {
+      transformResponse: [data => data]
+    }).then((res) => {
+      zkSNARKsOwnershipHashes.value = JSON.stringify(res.data);
+      res = JSON.stringify(res.data);
+    });
+  return res;
+}
+
+async function generateOwnershipProofIPFS(){
+  const d = userProofCards.value[1].data;
+  const userAddress = accountAddress.value;
+  
+  let u = aesKeys.value.
+          filter((x) => x.address === accountAddress.value)
+          [0].aesKey;
+
+  let aA, aB, aC, aD;
+
+  const v = d.v;
+  let oA = utilFns.hexToBig(utilFns.hashStr(d.v + u).substring(0,32));
+  let oB = utilFns.hexToBig(utilFns.hashStr(d.v + u).substring(32));
+
+  const k = ephemereForOwnership.value;
+
+  await zaestContract.methods.userDataSmartContract(userAddress, oA, oB, 0).call().then((result)=>{aA=result});
+  await zaestContract.methods.userDataSmartContract(userAddress, oA, oB, 1).call().then((result)=>{aB=result});
+  await zaestContract.methods.userDataSmartContract(userAddress, oA, oB, 2).call().then((result)=>{aC=result});
+  await zaestContract.methods.userDataSmartContract(userAddress, oA, oB, 3).call().then((result)=>{aD=result});
+
+  const dA = await performAES(u, BigInt(aA).toString(16), 'decrypt').replace(/\s+/g, "");
+  const dB = await performAES(u, BigInt(aB).toString(16), 'decrypt').replace(/\s+/g, "");
+  const dC = await performAES(u, BigInt(aC).toString(16), 'decrypt').replace(/\s+/g, "");
+  const dD = await performAES(u, BigInt(aD).toString(16), 'decrypt').replace(/\s+/g, "");
+
+  const e_rsA = await performAES(k, dA, 'encrypt').replace(/\s+/g, "");
+  const e_rsB = await performAES(k, dB, 'encrypt').replace(/\s+/g, "");
+  const e_rsC = await performAES(k, dC, 'encrypt').replace(/\s+/g, "");
+  const e_rsD = await performAES(k, dD, 'encrypt').replace(/\s+/g, "");
+
+  let cA =  d.c.substring(0,16);
+  let cB =  d.c.substring(16,32);
+  let cC =  d.c.substring(32,48);
+  let cD =  d.c.substring(48) + "_".repeat(64-d.c.length);
+  let h_ipfs_p = utilFns.hashHex(utilFns.strToHex(e_rsA+e_rsB+e_rsC+e_rsD+cA+cB+cC+cD));
+  let h_ipfs_p0 = utilFns.hexToBig(h_ipfs_p.substring(0,32));
+  let h_ipfs_p1 = utilFns.hexToBig(h_ipfs_p.substring(32));
+
+  let res;
+
+  await axios.get(`${url}/zokratesOwnershipIPFS`, 
+    { params: {
+        e_rsA: utilFns.hexToBig(e_rsA),
+        e_rsB: utilFns.hexToBig(e_rsB),
+        e_rsC: utilFns.hexToBig(e_rsC),
+        e_rsD: utilFns.hexToBig(e_rsD),
+        cA: utilFns.strToBig(cA),
+        cB: utilFns.strToBig(cB),
+        cC: utilFns.strToBig(cC),
+        cD: utilFns.strToBig(cD),  
+      }
+    },
+    {
+      transformResponse: [data => data]
+    }).then((res) => {
+      zkSNARKsOwnershipIPFS.value = JSON.stringify(res.data);
       res = JSON.stringify(res.data);
     });
   return res;
