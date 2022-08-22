@@ -1,27 +1,45 @@
 <template>
   <div class="flex flex-col bg-stone-900 text-white min-h-screen" > 
+    
     <ParticlesBackground v-if="currentPath!=='#/userpage' &&
                                currentPath!=='#/verifierpage' &&
                                currentPath!=='#/secondarykeys'" />
+    
     <Menu :connectionStatus="connectionStatus" @connect="connectMetamask"/>
    
     <About v-if="currentPath==='#/about'" class="flex grow" />
+    
     <SecondaryKeys v-else-if="currentPath==='#/secondarykeys'" class="flex grow"
-      @updateSecondaryKeysAES="updateKeysAES" @buttonSecondaryKeysAES="handleActionAES"
-      @updateSecondaryKeysRSA="updateKeysRSA" @buttonSecondaryKeysRSA="handleActionRSA"
+      @updateSecondaryKeysAES="updateKeysAES" @buttonSecondaryKeysAES="handleAES"
+      @updateSecondaryKeysRSA="updateKeysRSA" @buttonSecondaryKeysRSA="handleRSA"
       :props="secondaryKeysCards"
     />
-    <UserPage v-else-if="currentPath==='#/userpage'" class="flex grow" />
-    <VerifierPage v-else-if="currentPath==='#/verifierpage'" class="flex grow"
-      :request="verifierRequestCards" :submitted="verifiersSubmittedRequests" :received="verifiersReceivedProofs"
-      :account="accountAddress"
-      @updateOnboardingReq="updateOnboardingReq" @buttonOnboardingReq="handleActionOnboardingReq"
-      @updateOwnershipReq="updateOwnershipReq" @buttonOwnershipReq="handleActionOwnershipReq"
+    
+    <UserPage v-else-if="currentPath==='#/userpage'" class="flex grow" 
+      :active="userActiveRequestCards" :action="userActionCards" 
+      :submitted="userSubmittedRequests" :account="accountAddress"
+      @buttonUserActiveReq="handleUserActive" @buttonUserActionReq="handleUserAction"
     />
+    
+    <VerifierPage v-else-if="currentPath==='#/verifierpage'" class="flex grow"
+      :request="verifierRequestCards" :submitted="verifierSubmittedRequests" 
+      :received="verifierReceivedProofs" :account="accountAddress"
+      @updateOnboardingReq="updateOnboardingReq" @buttonOnboardingReq="handleOnboardingReq"
+      @updateOwnershipReq="updateOwnershipReq" @buttonOwnershipReq="handleOwnershipReq"
+    />
+
     <Home v-else />
    
     <p class="text-2xl">
-        {{verifiersSubmittedRequests}}
+      {{userActionCards}}
+    </p>
+
+    <p class="text-2xl">
+        {{userActiveRequestCards}}
+    </p>
+
+    <p class="text-2xl">
+        {{verifierSubmittedRequests}}
     </p>
 
     <p class="text-2xl">
@@ -140,7 +158,7 @@ const secondaryKeysCards = ref([
 },
 ]);
 
-const userDataCards = ref([]);
+
 
 const verifierRequestCards = ref([
 {
@@ -168,17 +186,50 @@ const verifierRequestCards = ref([
     "field requested": "",
   },
   "texts": {
-    "generated ephemeral key": "",
   },
   "buttons": [
-    "generate ephemeral key",
     "send request to smart contract",
   ]
 }]);
 
-const usersActiveRequestCards = ref([]);
-const verifiersSubmittedRequests = ref([]);
-const verifiersReceivedProofs = ref([]);
+const userActionCards = ref([
+{
+  "title": "select request",
+  "texts": {
+    "request type": "",
+    "requesting verifier": "",
+    "request time": "",
+    "request expiry time": "",
+  },
+  "buttons": [
+    "decrypt request",
+    "ignore request",
+  ]
+},
+{
+  "title": "request parameters",
+  "texts": {
+    "field requested": "",
+    "request operation": "",
+    "request arguments": "",
+    "IPFS CID": ""
+  },
+  "buttons": [
+    "place data on IPFS (optional)",
+    "submit response to smart contract",
+    "submit response to s.c. & IPFS",
+  ]
+},
+{
+  "active": "false",
+}
+])
+
+const verifierSubmittedRequests = ref([]);
+const verifierReceivedProofs = ref([]);
+const userActiveRequestCards = ref([]);
+const userSubmittedRequests = ref([]);
+
 
 const aesKeys = ref([]);
 const rsaKeys = ref([]);
@@ -201,7 +252,7 @@ const updateKeysRSA = (...args) => {
   secondaryKeysCards.value[1].inputs[args[0]] = args[1];
 }
 
-const handleActionAES = (...args) => {
+const handleAES = (...args) => {
   if(args[0]==='generate AES key'){
     secondaryKeysCards.value[0].texts["generated AES key"] = utilFns.oneTimeKey(16); 
   }
@@ -230,7 +281,7 @@ const handleActionAES = (...args) => {
   }
 }
 
-const handleActionRSA = async (...args) => {
+const handleRSA = async (...args) => {
   if(args[0]==='generate RSA keys'){
     const keys =  await axios.get(`${url}/rsaKeys`).then((response) =>
       [response['data'][0].substring(5), response['data'][1].substring(5)]); 
@@ -259,7 +310,7 @@ const handleActionRSA = async (...args) => {
   }      
 }
 
-const handleActionOnboardingReq = async (...args) => {
+const handleOnboardingReq = async (...args) => {
   if(args[0]==='generate ephemeral key'){
     verifierRequestCards.value[0].texts["generated ephemeral key"] = utilFns.oneTimeKey(16); 
   }
@@ -271,7 +322,7 @@ const handleActionOnboardingReq = async (...args) => {
 
     let t = verifierRequestCards.value[0].texts;
     let p = rsaKeys.value.
-            filter((x) => x.address === userAddress)
+            filter((x) => x.address.toLowerCase() === userAddress.toLowerCase())
             [0].rsaPBK;
     
     const paddedDPrime = i["new data"] + "_".repeat(64-i["new data"].length);
@@ -288,7 +339,8 @@ const handleActionOnboardingReq = async (...args) => {
     const k  = t["generated ephemeral key"];
     const e_ru = await performAES(k, ru, 'encrypt');
     const kPrime = await performRSA(p, k, 'encrypt');
-    const nonce = utilFns.strToBig(utilFns.oneTimeKey(16)).toString();
+    const n = utilFns.oneTimeKey(16);
+    const nonce = utilFns.strToBig(n).toString();
     const tLimit= i["time limit"].toString();
 
     zaestContract.
@@ -313,31 +365,39 @@ const handleActionOnboardingReq = async (...args) => {
         console.log("Hash of the transaction: " + res)
 
         let d = new Date();
-        d.setSeconds(d.getSeconds() + parseInt(tLimit));
+        let e = new Date();
+        e.setSeconds(e.getSeconds() + parseInt(tLimit));
 
-        let dateString = ("0" + d.getDate()).slice(-2) + "-" + ("0"+(d.getMonth()+1)).slice(-2) + "-" +
+        let dateStringD = ("0" + d.getDate()).slice(-2) + "-" + ("0"+(d.getMonth()+1)).slice(-2) + "-" +
         d.getFullYear() + " " + ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+        let dateStringE = ("0" + e.getDate()).slice(-2) + "-" + ("0"+(e.getMonth()+1)).slice(-2) + "-" +
+        e.getFullYear() + " " + ("0" + e.getHours()).slice(-2) + ":" + ("0" + e.getMinutes()).slice(-2);
 
-        usersActiveRequestCards.value.push({
+        userActiveRequestCards.value.push({
+          "verifier": accountAddress.value,
+          "recipient": userAddress.replace(/\s+/g, ""),
+          "ignore": "false",
+          "title": "request " + n,
           "texts": {
             "request type": "onboard new data",
             "requesting verifier": accountAddress.value,
-            "requesting nonce": nonce,
-            "request expiry time": dateString,
+            "request time": dateStringD,
+            "request expiry time": dateStringE,
           },
           "buttons": [
             "select request",
-            "ignore request"
+            "ignore request",
           ]
-        })
+        });
 
-        verifiersSubmittedRequests.value.push({
+        verifierSubmittedRequests.value.push({
           "verifier": accountAddress.value,
+          "title": "request " + n,
           "texts": {
             "request type": "onboard new data",
             "requested account": userAddress,
-            "requesting nonce": nonce,
-            "request expiry time": dateString,
+            "request time": dateStringD,
+            "request expiry time": dateStringE,
           },
         })
 
@@ -346,18 +406,14 @@ const handleActionOnboardingReq = async (...args) => {
   }
 }
 
-const handleActionOwnershipReq = async (...args) => {
-  if(args[0]==='generate ephemeral key'){
-    verifierRequestCards.value[1].texts["generated ephemeral key"] = utilFns.oneTimeKey(16); 
-  }
-  if(args[0]==='send request to smart contract'){
+const handleOwnershipReq = async (...args) => {
 
     let v = verifierRequestCards.value[1].inputs["field requested"];
     let userAddress = verifierRequestCards.value[1].inputs["user address"];
-    let n = verifierRequestCards.value[1].texts["generated ephemeral key"];
-            
+    let n = utilFns.oneTimeKey(16); 
+
     let p = rsaKeys.value.
-            filter((x) => x.address === accountAddress.value)
+            filter((x) => x.address.toLowerCase() === accountAddress.value.toLowerCase())
             [0].rsaPBK;
     
     const paddedVar = v + "_".repeat(32-v.length);
@@ -383,24 +439,66 @@ const handleActionOwnershipReq = async (...args) => {
         }
 
         let d = new Date();
+        let e = new Date();
+        e.setSeconds(e.getSeconds() + 18000);
 
-        let dateString = ("0" + d.getDate()).slice(-2) + "-" + ("0"+(d.getMonth()+1)).slice(-2) + "-" +
+        let dateStringD = ("0" + d.getDate()).slice(-2) + "-" + ("0"+(d.getMonth()+1)).slice(-2) + "-" +
         d.getFullYear() + " " + ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+        let dateStringE = ("0" + e.getDate()).slice(-2) + "-" + ("0"+(e.getMonth()+1)).slice(-2) + "-" +
+        e.getFullYear() + " " + ("0" + e.getHours()).slice(-2) + ":" + ("0" + e.getMinutes()).slice(-2);
 
-        verifiersSubmittedRequests.value.push({
+
+        verifierSubmittedRequests.value.push({
           "verifier": accountAddress.value,
           "title": "request " + n,
           "texts": {
             "request type": "proof of ownership",
             "requested account": userAddress,
-            "request time": dateString,
+            "request time": dateStringD,
+            "request expiry time": dateStringE,
           },
         })
 
+        userActiveRequestCards.value.push({
+          "verifier": accountAddress.value,
+          "recipient": userAddress.replace(/\s+/g, ""),
+          "ignore": "false",
+          "title": "request " + n,
+          "texts": {
+            "request type": "proof of ownership",
+            "requesting verifier": accountAddress.value,
+            "request time": dateStringD,
+            "request expiry time": dateStringE,
+          },
+          "buttons": [
+            "select request",
+            "ignore request",
+          ]
+        });
 
         notification("Smart Contract", "Proof of data ownership request submitted to smart contract");
         console.log("Hash of the transaction: " + res);
       })
+}
+
+const handleUserActive = async (...args) => {
+  if(args[1]==='ignore request'){
+    userActiveRequestCards.value[args[0]].ignore = 'true';
+  }
+  if(args[1]==='select request'){
+    let activeCard = userActiveRequestCards.value[args[0]];
+    userActionCards.value[2].active = 'true';
+    userActionCards.value[0].title = activeCard.title;
+    userActionCards.value[0].texts["request type"] = activeCard.texts["request type"];
+    userActionCards.value[0].texts["requesting verifier"] = activeCard.verifier;
+    userActionCards.value[0].texts["request time"] = activeCard.texts["request time"];  
+    userActionCards.value[0].texts["request expiry time"] = activeCard.texts["request expiry time"];
+  }
+}
+
+const handleUserAction = async (...args) => {
+  if(args[0]==='ignore request'){
+    userActionCards.value[2].active = 'false';
   }
 }
 

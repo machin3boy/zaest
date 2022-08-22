@@ -1,7 +1,7 @@
 <template>
     <div class="flex flex-col">
         <div class="flex grow ">
-            <h1 class="text-3xl my-10 ml-5">
+            <h1 class="text-3xl my-10 ml-10">
                 Onboard your secondary encryption keys: 
             </h1>
         </div>

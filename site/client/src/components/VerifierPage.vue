@@ -33,7 +33,7 @@
             </h1>
             <div class="flex flex-wrap justify-center items-center">
                 <div v-for="(item, index) in submitted">
-                    <Card v-if="item.verifier===account" :fields="item" class="bg-black text-white m-3" />
+                    <Card v-if="item.verifier.toLowerCase()===account.toLowerCase()" :fields="item" class="bg-black text-white m-3" />
                 </div>
             </div>
         </div>
