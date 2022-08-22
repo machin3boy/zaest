@@ -670,6 +670,8 @@ const handleUserAction = async (...args) => {
   }
 }
 
+const placeToIPFS = ref(["false", 0]);
+
 const handleUserProof = async (...args) => {
   // index 0: onboarding, index 1: verification
   const i = args[0];
@@ -703,21 +705,12 @@ const handleUserProof = async (...args) => {
     }
   }
   if(button==="place data on IPFS (optional)"){
-    if(i===0){
-      let j = { "a": "a",
-                "o": "o",
-      }; 
-      const f = new File([j.a + j.b], 'zaest_onboarding_proof.txt');
-      const cid = await storageClient.put([f]);
-      userProofCards.value[0].data.c = cid;
-      userProofCards.value[0].texts["IPFS CID (optional)"] = cid;
-    }
-    if(i===1){
-      const f = new File([userProofCards.value[1].data.e_rs], 'zaest_ownership_proof.txt');
-      const cid = await storageClient.put([f]);
-      userProofCards.value[1].data.c = cid;
-      userProofCards.value[1].texts["IPFS CID (optional)"] = cid;
-    }
+    notification("IPFS notification", "Your proof/data will be stored on IPFS, select the IPFS options")
+    placeToIPFS.value[0] = "true";
+    if(i===0)
+      placeToIPFS.value[1] = 0;
+    else
+      placeToIPFS.value[1] = 1; 
   }
   if(button==="submit response to smart contract"){
     let proofOnboardingHashes = zkSNARKsOnboardingHashes.value;
@@ -902,6 +895,17 @@ async function generateOnboardingProofIPFS(){
   let cC =  d.c.substring(32,48);
   let cD =  d.c.substring(48) + "_".repeat(64-d.c.length);
   let h_ipfs_d = utilFns.hashHex(a + oA + oB + utilFns.strToHex(cA+cB+cC+cD));
+
+  
+  if(placeToIPFS.value[0]==="true" && placeToIPFS.value[1]===0){ 
+      let d = userProofCards.value[0].data.a + userProofCards.value[0].data.o;
+      const f = new File([d], 'zaest_onboarding_proof.txt');
+      const cid = await storageClient.put([f]);
+      userProofCards.value[0].data.c = cid;
+      userProofCards.value[0].texts["IPFS CID (optional)"] = cid;
+      placeToIPFS.value[0]="false";
+  }    
+
   await axios.get(`${url}/zokratesOnboardingIPFS`,
     { params: {
       aA: utilFns.hexToBig(aA),
@@ -1114,6 +1118,16 @@ async function generateOwnershipProofIPFS(){
   let h_ipfs_p = utilFns.hashHex(utilFns.strToHex(e_rsA+e_rsB+e_rsC+e_rsD+cA+cB+cC+cD));
   let h_ipfs_p0 = utilFns.hexToBig(h_ipfs_p.substring(0,32));
   let h_ipfs_p1 = utilFns.hexToBig(h_ipfs_p.substring(32));
+
+  if(placeToIPFS.value[0]==="true" && placeToIPFS.value[1]===1){ 
+      let d = userProofCards.value[1].data.e_rs;
+      const f = new File([d], 'zaest_onboarding_proof.txt');
+      const cid = await storageClient.put([f]);
+      userProofCards.value[1].data.c = cid;
+      userProofCards.value[1].texts["IPFS CID (optional)"] = cid;
+      placeToIPFS.value[0]="false";
+  }    
+
   await axios.get(`${url}/zokratesOwnershipIPFS`, 
     { params: {
         e_rsA: utilFns.hexToBig(e_rsA),
