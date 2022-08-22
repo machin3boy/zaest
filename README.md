@@ -24,4 +24,6 @@ To access the verification and proving keys for each of the five individual circ
     bafybeiavnn2ezvflzgei2v2h5xzasyvb32lmnzaxm3rbjsbrmpegqy3wgi
     bafybeibwwsbwd5dmkyrxiv4jriksu63426uagubsg4fbzhx334hy6l2w44
 
+To install and run this project you can refer to the README.md in /site/
 
+A prototype is temporarily live on www.zaestprototype.site, however the RAM available is only 512MB and as a consequence generating ZKPs can be very time-consuming.
