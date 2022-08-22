@@ -200,7 +200,7 @@ contract Zaest {
             contract by verifier
         */
         require(inputAES[8] == 1 && inputHashes[12] == 1, "Provided data failed integrity checks");
-        require(dataUpdateRequestIntVar[PBKVerifier][msg.sender][nonce][2] < block.timestamp,
+        require(block.timestamp < dataUpdateRequestIntVar[PBKVerifier][msg.sender][nonce][2],
         "Onboarding request rejected: time limit exceeded");
         require(inputAES[0] == inputHashes[0] && inputAES[1] == inputHashes[1] &&
         inputAES[2] == inputHashes[2] && inputAES[3] == inputHashes[3] &&
@@ -334,5 +334,6 @@ contract Zaest {
         }                    
     }
 }
+
 
 

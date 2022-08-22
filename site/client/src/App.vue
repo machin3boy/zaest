@@ -123,7 +123,7 @@ const currentView = computed(() => {
 const url = "http://localhost:3001";
 const connectionStatus = ref('Connect Wallet');
 const accountAddress = ref('');
-const contractAddress = "0xD914563518E2ebA175311DD1794A535311e6bd5c";
+const contractAddress = "0xc46f907caA8153E5AcE6b1F649De78D1CB5E585e";
 const ABI = require('../ABI.json');
 let web3;
 let zaestContract;
@@ -256,6 +256,7 @@ const userProofCards = ref([
     "k": "",
     "dPrime": "",
     "updateOp": "",
+    "nonce": "",
     "ar": "",
     "v": "",
     "c": "bafybeichrcedtfge7lxeevawzeb2fslnmwrwup7qf5tjd2kiaf477lichm",
@@ -297,11 +298,11 @@ const aesKeys = ref([]);
 const rsaKeys = ref([]);
 
 const fieldTest = ref('');
-const zkSNARKsOnboardingHashes = ref('');
-const zkSNARKsOnboardingAES = ref('');
-const zkSNARKsOnboardingIPFS = ref('');
-const zkSNARKsOwnershipHashes = ref('');
-const zkSNARKsOwnershipIPFS = ref('');
+const zkSNARKsOnboardingHashes = ref([]);
+const zkSNARKsOnboardingAES = ref([]);
+const zkSNARKsOnboardingIPFS = ref([]);
+const zkSNARKsOwnershipHashes = ref([]);
+const zkSNARKsOwnershipIPFS = ref([]);
 
 const updateOnboardingReq = (...args) => {
   verifierRequestCards.value[0].inputs[args[0]] = args[1];
@@ -627,6 +628,7 @@ const handleUserAction = async (...args) => {
       userProofCards.value[0].data["ar"] = ar;
       userProofCards.value[0].data["v"] = v;
       userProofCards.value[0].data["verifier"] = verifierAddress;
+      userProofCards.value[0].data["nonce"] = nonce;
       userProofCards.value[0].active = 'true';
     }
     else if(requestType === "proof of ownership"){
@@ -693,10 +695,61 @@ const handleUserProof = async (...args) => {
     return;
   }
   if(button==="submit response to smart contract"){
-    return;
+    let proofOnboardingHashes = zkSNARKsOnboardingHashes.value;
+    let proofOnboardingAES = zkSNARKsOnboardingAES.value;
+    let proofOnboardingIPFS = zkSNARKsOnboardingIPFS.value;
+    let proofOwnershipHashes = zkSNARKsOwnershipHashes.value;
+    let proofOwnershipIPFS = zkSNARKsOwnershipIPFS.value;
+    if(i === 0){
+      let PBKVerifier = userProofCards.value[0].data.verifier;
+      let nonce = userProofCards.value[0].data.nonce;
+      let proofOnboardingHashesParameters = proofOnboardingHashes[0];
+      let proofOnboardingHashesInputs = proofOnboardingHashes[1];  
+      let proofOnboardingAESParameters = proofOnboardingAES[0];
+      let proofOnboardingAESInputs = proofOnboardingAES[1];
+      console.log(PBKVerifier, nonce, proofOnboardingHashesParameters,
+                  proofOnboardingHashesInputs, proofOnboardingAESParameters,
+                  proofOnboardingAESInputs);
+      await zaestContract.
+        methods.
+        onboardDataSmartContract(PBKVerifier, nonce, proofOnboardingAESParameters,
+                                  proofOnboardingAESInputs, proofOnboardingHashesParameters,
+                                  proofOnboardingHashesInputs
+                                  ).
+        send({ from: accountAddress.value }, function (err, res) {
+          if (err) {
+            console.log("An error occured", err)      
+            return
+          }
+          notification("Smart Contract", "SHA256 of AES key placed into the smart contract")
+          console.log("Hash of the transaction: " + res)
+        });
+    }
+    if(i === 1){
+      let proofOwnershipHashesParameters = proofOwnershipHashes.split("/")[0];
+      let proofOwnershipHashesInputs = proofOwnershipHashes.split("/")[1];
+    }
   }
   if(button==="submit response to smart contract & IPFS"){
-    return;
+    let proofOnboardingHashes = zkSNARKsOnboardingHashes.value;
+    let proofOnboardingAES = zkSNARKsOnboardingAES.value;
+    let proofOnboardingIPFS = zkSNARKsOnboardingIPFS.value;
+    let proofOwnershipHashes = zkSNARKsOwnershipHashes.value;
+    let proofOwnershipIPFS = zkSNARKsOwnershipIPFS.value;
+    if(i === 0){
+      let proofOnboardingHashesParameters = proofOnboardingHashes.split("/")[0];
+      let proofOnboardingHashesInputs = proofOnboardingHashes.split("/")[1];  
+      let proofOnboardingAESParameters = proofOnboardingAES.split("/")[0];
+      let proofOnboardingAESInputs = proofOnboardingAES.split("/")[1];
+      let proofOnboardingIPFSParameters = proofOnboardingIPFS.split("/")[0];
+      let proofOnboardingIPFSInputs = proofOnboardingIPFS.split("/")[1];
+    }
+    if(i === 1){
+      let proofOwnershipHashesParameters = proofOwnershipHashes.split("/")[0];
+      let proofOwnershipHashesInputs = proofOwnershipHashes.split("/")[1];
+      let proofOwnershipIPFSParameters = proofOwnershipIPFS.split("/")[0];
+      let proofOwnershipIPFSInputs = proofOwnershipIPFS.split("/")[1];
+    }
   }
 }
 
@@ -716,7 +769,6 @@ async function generateOnboardingProofHashes(){
                      utilFns.strToHex(d.dPrime.substring(32, 48)) +
                      utilFns.strToHex(d.dPrime.substring(48)) +
                      a + utilFns.strToHex(u));
-  let onboardingHashesProof;
   await axios.get(`${url}/zokratesOnboardingHashes`,
     { params: {
       u:  utilFns.strToBig(u),
@@ -745,10 +797,11 @@ async function generateOnboardingProofHashes(){
     {
       transformResponse: [data => data]
     }).then((res) => {
-      zkSNARKsOnboardingHashes.value = JSON.stringify(res.data);
-      onboardingHashesProof = JSON.stringify(res.data);
+      let j = res.data
+      zkSNARKsOnboardingHashes.value.push([j.proof.a, j.proof.b, j.proof.c]);
+      zkSNARKsOnboardingHashes.value.push(j.inputs);
     });
-  return onboardingHashesProof;
+  return zkSNARKsOnboardingHashes.value;
 }
 
 async function generateOnboardingProofIPFS(){
@@ -769,8 +822,6 @@ async function generateOnboardingProofIPFS(){
   let cC =  d.c.substring(32,48);
   let cD =  d.c.substring(48) + "_".repeat(64-d.c.length);
   let h_ipfs_d = utilFns.hashHex(a + oA + oB + utilFns.strToHex(cA+cB+cC+cD));
-  let res;
-
   await axios.get(`${url}/zokratesOnboardingIPFS`,
     { params: {
       aA: utilFns.hexToBig(aA),
@@ -790,10 +841,11 @@ async function generateOnboardingProofIPFS(){
     {
       transformResponse: [data => data]
     }).then((res) => {
-      zkSNARKsOnboardingIPFS.value = JSON.stringify(res.data);
-      res = JSON.stringify(res.data);
+      let j = res.data
+      zkSNARKsOnboardingIPFS.value.push([j.proof.a, j.proof.b, j.proof.c]);
+      zkSNARKsOnboardingIPFS.value.push(j.inputs); 
     });
-  return res;
+  return zkSNARKsOnboardingIPFS.value;
 }
 
 async function generateOnboardingProofAES(){
@@ -808,7 +860,6 @@ async function generateOnboardingProofAES(){
   let aB = a.substring(32,64);
   let aC = a.substring(64,96);
   let aD = a.substring(96, 128);
-  let res;
   await axios.get(`${url}/zokratesOnboardingAES`,
     { params: {
       u:  utilFns.strToBig(u),
@@ -829,10 +880,11 @@ async function generateOnboardingProofAES(){
     {
       transformResponse: [data => data]
     }).then((res) => {
-      zkSNARKsOnboardingAES.value = JSON.stringify(res.data);
-      res = JSON.stringify(res.data);
+      let j = res.data
+      zkSNARKsOnboardingAES.value.push([j.proof.a, j.proof.b, j.proof.c]);
+      zkSNARKsOnboardingAES.value.push(j.inputs);
     });
-  return res;
+  return zkSNARKsOnboardingAES.value;
 }
 
 //a browser-side ephemeral key that has to be the same to
@@ -905,8 +957,6 @@ async function generateOwnershipProofHashes(){
   let h_dnA = utilFns.hexToBig(h_dn.substring(0,32));
   let h_dnB = utilFns.hexToBig(h_dn.substring(32));
 
-  let res;
-
   await axios.get(`${url}/zokratesOwnershipHashes`, 
   { params: {
       u: utilFns.strToBig(u),
@@ -935,10 +985,11 @@ async function generateOwnershipProofHashes(){
     {
       transformResponse: [data => data]
     }).then((res) => {
-      zkSNARKsOwnershipHashes.value = JSON.stringify(res.data);
-      res = JSON.stringify(res.data);
+      let j = res.data
+      let r = JSON.stringify([j.proof.a, j.proof.b, j.proof.c]) + "/" + JSON.stringify(j.inputs);
+      zkSNARKsOwnershipHashes.value = r;
     });
-  return res;
+  return zkSNARKsOwnershipHashes.value;
 }
 
 async function generateOwnershipProofIPFS(){
@@ -979,9 +1030,6 @@ async function generateOwnershipProofIPFS(){
   let h_ipfs_p = utilFns.hashHex(utilFns.strToHex(e_rsA+e_rsB+e_rsC+e_rsD+cA+cB+cC+cD));
   let h_ipfs_p0 = utilFns.hexToBig(h_ipfs_p.substring(0,32));
   let h_ipfs_p1 = utilFns.hexToBig(h_ipfs_p.substring(32));
-
-  let res;
-
   await axios.get(`${url}/zokratesOwnershipIPFS`, 
     { params: {
         e_rsA: utilFns.hexToBig(e_rsA),
@@ -997,10 +1045,11 @@ async function generateOwnershipProofIPFS(){
     {
       transformResponse: [data => data]
     }).then((res) => {
-      zkSNARKsOwnershipIPFS.value = JSON.stringify(res.data);
-      res = JSON.stringify(res.data);
+      let j = res.data
+      let r = JSON.stringify([j.proof.a, j.proof.b, j.proof.c]) + "/" + JSON.stringify(j.inputs);
+      zkSNARKsOwnershipIPFS.value = r;
     });
-  return res;
+  return zkSNARKsOwnershipIPFS.value;
 }
 
 async function performAES(aesKeyParam, aesDataParam, aesFunctionParam) {
