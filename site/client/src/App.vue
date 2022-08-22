@@ -83,7 +83,8 @@
 
 <script setup>
 import { ref, computed, h } from "vue";
-import { ElNotification } from 'element-plus'
+import { ElNotification } from 'element-plus';
+import { Web3Storage } from 'web3.storage';
 
 import SimpleCard from "./components/SimpleCard.vue";
 import InputsCard from "./components/InputsCard.vue";
@@ -101,6 +102,10 @@ import * as utilFns from "./util";
 
 import Web3 from 'web3';
 import axios from 'axios';
+
+const storageClient = new Web3Storage({
+  token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDY1Mjg1ZUUwNDBhMUJGYTZkNTRCMTg1NzdFNzc5OGRiM2ExODE0ZDciLCJpc3MiOiJ3ZWIzLXN0b3JhZ2UiLCJpYXQiOjE2NjExNzM4ODM4NDQsIm5hbWUiOiJ6YWVzdCJ9.UHE2aGUwvYBfYvTD5r9CokI28HIL9YEVD_yn6RTgnn0"
+})
 
 const routes = {
   '/': Home,
@@ -259,7 +264,9 @@ const userProofCards = ref([
     "nonce": "",
     "ar": "",
     "v": "",
-    "c": "bafybeichrcedtfge7lxeevawzeb2fslnmwrwup7qf5tjd2kiaf477lichm",
+    "a": "",
+    "o": "",
+    "c": "ipfshasnotbeeninitializedbutthisisanexampleaddress",
     "verifier": "",
   },
   "active": "false",
@@ -285,6 +292,9 @@ const userProofCards = ref([
     "nonce": "",
     "v": "v",
     "verifier": "",
+    "kPrime": "",
+    "e_rs": "",
+    "c": "ipfshasnotbeeninitializedbutthisisanexampleaddress",
   },
   "active": "false",
 }])
@@ -362,7 +372,7 @@ const handleRSA = async (...args) => {
   }
   if(args[0]==='onboard PBK to smart contract'){
     let key = rsaKeys.value.
-              filter((x) => x.address === accountAddress.value)
+              filter((x) => x.address.toLowerCase() === accountAddress.value.toLowerCase())
               [0].rsaPBK;
     zaestContract.
       methods.
@@ -389,8 +399,9 @@ const handleOnboardingReq = async (...args) => {
     const userAddress = i["user address"];
 
     let t = verifierRequestCards.value[0].texts;
+
     let p = rsaKeys.value.
-            filter((x) => x.address.toLowerCase() === userAddress.toLowerCase())
+            filter((x) => x.address.toLowerCase() === accountAddress.value.toLowerCase())
             [0].rsaPBK;
     
     const paddedDPrime = i["new data"] + "_".repeat(64-i["new data"].length);
@@ -692,7 +703,21 @@ const handleUserProof = async (...args) => {
     }
   }
   if(button==="place data on IPFS (optional)"){
-    return;
+    if(i===0){
+      let j = { "a": "a",
+                "o": "o",
+      }; 
+      const f = new File([j.a + j.b], 'zaest_onboarding_proof.txt');
+      const cid = await storageClient.put([f]);
+      userProofCards.value[0].data.c = cid;
+      userProofCards.value[0].texts["IPFS CID (optional)"] = cid;
+    }
+    if(i===1){
+      const f = new File([userProofCards.value[1].data.e_rs], 'zaest_ownership_proof.txt');
+      const cid = await storageClient.put([f]);
+      userProofCards.value[1].data.c = cid;
+      userProofCards.value[1].texts["IPFS CID (optional)"] = cid;
+    }
   }
   if(button==="submit response to smart contract"){
     let proofOnboardingHashes = zkSNARKsOnboardingHashes.value;
@@ -721,13 +746,29 @@ const handleUserProof = async (...args) => {
             console.log("An error occured", err)      
             return
           }
-          notification("Smart Contract", "SHA256 of AES key placed into the smart contract")
           console.log("Hash of the transaction: " + res)
         });
     }
     if(i === 1){
-      let proofOwnershipHashesParameters = proofOwnershipHashes.split("/")[0];
-      let proofOwnershipHashesInputs = proofOwnershipHashes.split("/")[1];
+      let PBKVerifier = userProofCards.value[1].data.verifier;
+      let nonce = userProofCards.value[1].data.nonce;
+      let e_rs = userProofCards.value[1].data.e_rs;
+      let kPrime = userProofCards.value[1].data.kPrime;
+      let proofOwnershipHashesParameters = proofOwnershipHashes[0];
+      let proofOwnershipHashesInputs = proofOwnershipHashes[1];
+      await zaestContract.
+        methods.
+        proveUserDataSmartContract(PBKVerifier, nonce, proofOwnershipHashesParameters,
+                                  proofOwnershipHashesInputs, e_rs,
+                                  kPrime
+                                  ).
+        send({ from: accountAddress.value }, function (err, res) {
+          if (err) {
+            console.log("An error occured", err)      
+            return
+          }
+          console.log("Hash of the transaction: " + res)
+        });
     }
   }
   if(button==="submit response to smart contract & IPFS"){
@@ -737,18 +778,53 @@ const handleUserProof = async (...args) => {
     let proofOwnershipHashes = zkSNARKsOwnershipHashes.value;
     let proofOwnershipIPFS = zkSNARKsOwnershipIPFS.value;
     if(i === 0){
-      let proofOnboardingHashesParameters = proofOnboardingHashes.split("/")[0];
-      let proofOnboardingHashesInputs = proofOnboardingHashes.split("/")[1];  
-      let proofOnboardingAESParameters = proofOnboardingAES.split("/")[0];
-      let proofOnboardingAESInputs = proofOnboardingAES.split("/")[1];
-      let proofOnboardingIPFSParameters = proofOnboardingIPFS.split("/")[0];
-      let proofOnboardingIPFSInputs = proofOnboardingIPFS.split("/")[1];
+      let proofOnboardingHashesParameters = proofOnboardingHashes[0];
+      let proofOnboardingHashesInputs = proofOnboardingHashes[1];  
+      let proofOnboardingAESParameters = proofOnboardingAES[0];
+      let proofOnboardingAESInputs = proofOnboardingAES[1];
+      let proofOnboardingIPFSParameters = proofOnboardingIPFS[0];
+      let proofOnboardingIPFSInputs = proofOnboardingIPFS[1];
+      let PBKVerifier = userProofCards.value[0].data.verifier;
+      let nonce = userProofCards.value[0].data.nonce;
+      
+      await zaestContract.
+        methods.
+        onboardDataIPFS(PBKVerifier, nonce, proofOnboardingAESParameters,
+                        proofOnboardingAESInputs, proofOnboardingHashesParameters,
+                        proofOnboardingHashesInputs, proofOnboardingIPFSParameters,
+                        proofOnboardingIPFSInputs
+                        ).
+        send({ from: accountAddress.value }, function (err, res) {
+          if (err) {
+            console.log("An error occured", err)      
+            return
+          }
+          console.log("Hash of the transaction: " + res)
+        });
     }
     if(i === 1){
-      let proofOwnershipHashesParameters = proofOwnershipHashes.split("/")[0];
-      let proofOwnershipHashesInputs = proofOwnershipHashes.split("/")[1];
-      let proofOwnershipIPFSParameters = proofOwnershipIPFS.split("/")[0];
-      let proofOwnershipIPFSInputs = proofOwnershipIPFS.split("/")[1];
+      let proofOwnershipHashesParameters = proofOwnershipHashes[0];
+      let proofOwnershipHashesInputs = proofOwnershipHashes[1];
+      let proofOwnershipIPFSParameters = proofOwnershipIPFS[0];
+      let proofOwnershipIPFSInputs = proofOwnershipIPFS[1];
+      let PBKVerifier = userProofCards.value[1].data.verifier;
+      let nonce = userProofCards.value[1].data.nonce;
+      let e_rs = userProofCards.value[1].data.e_rs;
+      let kPrime = userProofCards.value[1].data.kPrime;
+      await zaestContract.
+        methods.
+        proveUserDataIPFS(PBKVerifier, nonce, proofOwnershipHashesParameters,
+                            proofOwnershipHashesInputs, e_rs,
+                            kPrime, proofOwnershipIPFSParameters,
+                            proofOwnershipIPFSInputs
+                          ).
+        send({ from: accountAddress.value }, function (err, res) {
+          if (err) {
+            console.log("An error occured", err)      
+            return
+          }
+          console.log("Hash of the transaction: " + res)
+        });
     }
   }
 }
@@ -764,6 +840,10 @@ async function generateOnboardingProofHashes(){
   let aB = a.substring(32,64);
   let aC = a.substring(64,96);
   let aD = a.substring(96, 128);
+  let o =  utilFns.hashStr(d.v + u);
+  
+  userProofCards.value[0].data.a = a;
+  userProofCards.value[0].data.o = o;
   let h_da = utilFns.hashHex(utilFns.strToHex(d.dPrime.substring(0, 16)) +
                      utilFns.strToHex(d.dPrime.substring(16, 32)) +
                      utilFns.strToHex(d.dPrime.substring(32, 48)) +
@@ -947,6 +1027,9 @@ async function generateOwnershipProofHashes(){
   
   const kPrime = await performRSA(PBK_RSA_verifier, k, 'encrypt');
 
+  userProofCards.value.data[1].kPrime = kPrime;
+  userProofCards.value.data[1].e_rs = e_rsA + e_rsB + e_rsC + e_rsD;
+
   let h_key = utilFns.hashStr(u);
   let h_keyA = utilFns.hexToBig(h_key.substring(0,32));
   let h_keyB = utilFns.hexToBig(h_key.substring(32));
@@ -986,8 +1069,8 @@ async function generateOwnershipProofHashes(){
       transformResponse: [data => data]
     }).then((res) => {
       let j = res.data
-      let r = JSON.stringify([j.proof.a, j.proof.b, j.proof.c]) + "/" + JSON.stringify(j.inputs);
-      zkSNARKsOwnershipHashes.value = r;
+      zkSNARKsOwnershipHashes.value.push([j.proof.a, j.proof.b, j.proof.c]);
+      zkSNARKsOwnershipHashes.value.push(j.inputs);
     });
   return zkSNARKsOwnershipHashes.value;
 }
@@ -1027,6 +1110,7 @@ async function generateOwnershipProofIPFS(){
   let cB =  d.c.substring(16,32);
   let cC =  d.c.substring(32,48);
   let cD =  d.c.substring(48) + "_".repeat(64-d.c.length);
+  
   let h_ipfs_p = utilFns.hashHex(utilFns.strToHex(e_rsA+e_rsB+e_rsC+e_rsD+cA+cB+cC+cD));
   let h_ipfs_p0 = utilFns.hexToBig(h_ipfs_p.substring(0,32));
   let h_ipfs_p1 = utilFns.hexToBig(h_ipfs_p.substring(32));
@@ -1046,8 +1130,8 @@ async function generateOwnershipProofIPFS(){
       transformResponse: [data => data]
     }).then((res) => {
       let j = res.data
-      let r = JSON.stringify([j.proof.a, j.proof.b, j.proof.c]) + "/" + JSON.stringify(j.inputs);
-      zkSNARKsOwnershipIPFS.value = r;
+      zkSNARKsOwnershipIPFS.value.push([j.proof.a, j.proof.b, j.proof.c]);
+      zkSNARKsOwnershipIPFS.value.push(j.inputs);
     });
   return zkSNARKsOwnershipIPFS.value;
 }
