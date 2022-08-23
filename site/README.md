@@ -1,9 +1,10 @@
+install ZoKrates & VueCLI on your machiine
 
-to install:
-    install ZoKrates, VueCLI
-    in `client`, run `npm install` and `npx servce dist`
+to run project:
 
-    in `server`, run `npm install` and `npm run dev` or `node index.js`
+    in `client`, run `npm install` and `npm run serve` (to run client)
+
+    in `server`, run `npm install` and `npm run dev` (to run both server and client) or `node index.js` to run only server
 
     obtain the keys required for the zokrates circuits from IPFS as specified
     in the main project description README.md and place them into the following 
@@ -14,3 +15,5 @@ to install:
         ownership_hashes_params
         ownership_ipfs_params
 
+
+*please note that currently the `url` parameter in `/site/server/index.js` references http://localhost:3001, this can be adjusted according to your needs. 

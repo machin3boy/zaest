@@ -9,9 +9,9 @@ Of course, some of the proposed use-cases of this protocol are highly contingent
 
 Chainlink's prospective advantages to the protocol also include the possibility to simplify and scale the ZKP portions of the protocol more easily (although the protocol outlined as is is infinitely scaleable, Chainlink can allow for a number of optimizations through off-chain computations).
 
-The design of the protocol is presented in the file docs/Zaest.pdf.
+The design of the protocol is presented in the file /docs/Zaest.pdf.
 
-To access the verification and proving keys for each of the five individual circuit components please retrieve them from the following IPFS CIDs: 
+If you intend to install the project on your machine please note that the verification and proving keys are not present in the repo as they are large files. To access the verification and proving keys for each of the five individual circuit components please retrieve them from the following IPFS CIDs: 
 
     bafybeigx3mowmrbetae2m46rocpdi6staojsma6nzyn2u5bpmekssdmhtu
     bafybeiceajv3dsqma3wu6lr66dq7exiw3ofrrux4qpgidys3xgu6imc3iq
@@ -24,6 +24,10 @@ To access the verification and proving keys for each of the five individual circ
     bafybeiavnn2ezvflzgei2v2h5xzasyvb32lmnzaxm3rbjsbrmpegqy3wgi
     bafybeibwwsbwd5dmkyrxiv4jriksu63426uagubsg4fbzhx334hy6l2w44
 
-To install and run this project you can refer to the README.md in /site/
+These keys are to be housed in the corresponding directories in /ZoKrates/. They are as follows: /ZoKrates/onboarding\_aes\_params/, /ZoKrates/onboarding\_hashes\_params, /ZoKrates/onboarding\_ipfs\_params/, /ZoKrates/ownership\_hashes\_params/, /ZoKrates/onboarding\_ipfs\_params/.
 
-A prototype is temporarily live on www.zaestprototype.site, however the RAM available is only 512MB and as a consequence generating ZKPs can be very time-consuming.
+To install and run this project you can refer to the README.md in /site/.
+
+The contract address of the V1 prototype is given here: 0x5B3fB9655fab94D5A9491Ed3f8a4620afBA874A5
+
+A prototype is temporarily live on www.zaestprototype.site, however the RAM available is only 512MB and as a consequence generating ZKPs can be very time-consuming. When accessing the prototype please ensure that your wallet is connected as that will initialize the contract instance. Following this, please ensure that you onboard secondary keys with www.zaestprototype.site/#/secondarykeys prior to using the dApp.
