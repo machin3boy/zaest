@@ -1160,6 +1160,8 @@ const notification = (title, message) => {
   })
 }
 
+notification("Welcome", "Please connect your wallet and onboard your secondary keys (in dApp) to begin");
+
 </script>
 
 <script>
